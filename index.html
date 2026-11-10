@@ -112,7 +112,7 @@
             </div>
             <form class="type-row" id="type-form" hidden><input class="type-input" id="type-input" aria-label="Type the article" placeholder="Type der, die or das" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="10" required><button class="btn" type="submit">Check</button></form>
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
-            <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><button class="btn" id="next" hidden>Next word →</button></div>
+            <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
           <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another round</button></div>
         </div>
@@ -160,6 +160,14 @@
     } catch (_) { progress={}; }
     const $=id=>document.getElementById(id);
     let mode="challenge", queue=[],index=0,roundCorrect=0,answered=false,usedHint=false;
+    let advanceTimer=null;
+    function cancelAdvance(){
+      if(advanceTimer!==null){clearTimeout(advanceTimer);advanceTimer=null;}
+    }
+    function scheduleAdvance(delayMs){
+      cancelAdvance();
+      advanceTimer=setTimeout(()=>{advanceTimer=null;index++;render();},delayMs);
+    }
     function record(id){const p=progress[id];return p&&typeof p==="object"?p:{seen:0,correct:0,wrong:0,streak:0};}
     function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));}catch(_){}}
     function isMastered(w){return record(w.id).streak>=3;}
@@ -189,6 +197,7 @@
       $("stat-review").textContent=weak;
     }
     function start(m){
+      cancelAdvance();
       mode=m;queue=poolFor(mode);index=0;roundCorrect=0;answered=false;usedHint=false;
       document.querySelectorAll(".tab").forEach(t=>{const active=t.dataset.mode===m;t.classList.toggle("active",active);t.setAttribute("aria-pressed",String(active));});
       const titles={challenge:["Article Challenge","Tap der, die or das. Reveal the article only if you need help."],type:["Type the Article","Recall it yourself: type der, die or das, then check."],review:["Mistake Hunter","Only words you've missed before. Clear them with three correct recalls in a row."]};
@@ -196,6 +205,7 @@
       render();
     }
     function render(){
+      cancelAdvance();
       const completed=index>=queue.length;
       $("exercise").hidden=completed;$("empty").hidden=!completed;
       $("question-count").textContent=completed?queue.length+" / "+queue.length:(index+1)+" / "+queue.length;
@@ -213,7 +223,7 @@
       const w=queue[index];answered=false;usedHint=false;
       $("noun").textContent=w.noun;$("translation").textContent=w.english;
       $("reveal").hidden=false;$("reveal").disabled=false;$("reveal").textContent="Reveal article (counts as a hint)";
-      $("feedback").hidden=true;$("next").hidden=true;$("session-score").textContent=roundCorrect+" correct without hints";
+      $("feedback").hidden=true;$("advance-note").textContent="";$("session-score").textContent=roundCorrect+" correct without hints";
       $("choices").hidden=mode==="type";$("type-form").hidden=mode!=="type";
       $("answer-label").textContent=mode==="type"?"Type the missing article":"Choose der, die or das";
       document.querySelectorAll(".choice").forEach(b=>{b.disabled=false;b.classList.remove("right","wrong");});
@@ -235,17 +245,18 @@
       $("feedback").hidden=false;$("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Answer revealed: "+w.article+" "+w.noun:"The article is "+w.article+" — "+w.article+" "+w.noun;
       $("feedback-desc").textContent=(correct?"Great recall. ":"")+explain(w)+(isMastered(w)?" You have mastered this word!":"");
-      $("reveal").hidden=true;$("next").hidden=false;$("session-score").textContent=roundCorrect+" correct without hints";
+      $("reveal").hidden=true;$("session-score").textContent=roundCorrect+" correct without hints";
       document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;b.classList.toggle("right",b.dataset.article===w.article);b.classList.toggle("wrong",!correct&&b.dataset.article===guess&&guess!==w.article);});
       $("type-input").disabled=true;
-      $("next").textContent=index===queue.length-1?"See results →":"Next word →";
+      const delayMs=correct?600:3000;
+      $("advance-note").textContent=correct?"Next word in 0.6s…":"Review answer for 3 seconds…";
       updateStats();
+      scheduleAdvance(delayMs);
     }
     document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>start(t.dataset.mode)));
     document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>submit(b.dataset.article,false)));
     $("type-form").addEventListener("submit",e=>{e.preventDefault();const input=$("type-input").value.trim().toLowerCase();if(input)submit(input,false);});
     $("reveal").addEventListener("click",()=>submit("",true));
-    $("next").addEventListener("click",()=>{index++;render();});
     $("restart").addEventListener("click",()=>start(mode==="review"&&queue.length===0?"challenge":mode));
     $("reset").addEventListener("click",()=>{if(!confirm("Reset your saved accuracy, mistakes and mastery on this browser?"))return;progress={};save();start("challenge");});
     if(words.length!==100||new Set(words.map(w=>w.noun)).size!==100)console.error("Vocabulary data is not exactly 100 unique nouns.");
