@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16253b">
+  <meta name="description" content="Silent German article practice: der, die, das. Learn 100 essential nouns using active recall and targeted review.">
+  <title>Artikel Studio — German Article Trainer</title>
+  <style>
+    :root{--ink:#18283f;--sub:#65748a;--line:#e4e8ee;--bg:#f5f7f8;--white:#fff;--accent:#226d65;--accent-dark:#15584f;--radius:20px;--shadow:0 12px 35px rgba(24,40,63,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,input:focus-visible{outline:3px solid #8dc6bb;outline-offset:3px}
+    button:disabled{opacity:.46;cursor:not-allowed}
+    .shell{max-width:1110px;margin:auto;padding:26px 24px 52px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+    .identity{display:flex;align-items:center;gap:12px}
+    .logo{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#16253b;color:#fff;font-weight:800;font-size:21px;letter-spacing:-1px}
+    .brand{font-size:19px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+    .brand-sub{font-size:12px;color:var(--sub);margin-top:2px}
+    .chip{font-size:12px;color:#607083;border:1px solid #dde4eb;border-radius:100px;padding:7px 12px;background:#fff;white-space:nowrap}
+    .hero{background:#16253b;color:#fff;padding:29px 32px;border-radius:24px;display:flex;justify-content:space-between;gap:24px;align-items:center;overflow:hidden;position:relative}
+    .hero:after{content:"";width:280px;height:280px;position:absolute;right:-90px;top:-150px;border:50px solid rgba(174,225,200,.08);border-radius:50%;pointer-events:none}
+    .hero h1{font-size:clamp(25px,4vw,37px);letter-spacing:-1.25px;line-height:1.14;margin:5px 0 11px}
+    .hero p{color:#c8d1d9;margin:0;max-width:580px}
+    .eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#97d9c0}
+    .hero-mark{font-size:55px;font-weight:800;letter-spacing:-5px;opacity:.23;padding-right:16px;white-space:nowrap}
+    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 25px}
+    .stat{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px 18px;box-shadow:var(--shadow)}
+    .stat .num{font-size:27px;font-weight:800;letter-spacing:-.8px}
+    .stat .lab{font-size:12px;color:var(--sub)}
+    .main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(275px,.9fr);gap:22px;align-items:start}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+    .panel-pad{padding:24px}
+    .tabbar{display:flex;gap:6px;padding:7px;border-bottom:1px solid var(--line);background:#fbfcfd}
+    .tab{border:0;background:transparent;border-radius:12px;padding:13px 11px;flex:1;font-weight:700;font-size:13px;color:#66758a}
+    .tab.active{background:#e9f2ef;color:#165b50}
+    .tab:focus-visible{outline-offset:-3px}
+    .mode-title{font-size:22px;letter-spacing:-.65px;margin:0}
+    .mode-desc{color:var(--sub);font-size:13px;margin:6px 0 0}
+    .quiz-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .small-count{font-variant-numeric:tabular-nums;font-weight:700;color:var(--sub);font-size:13px;white-space:nowrap;padding-top:3px}
+    .progress-track{height:7px;background:#e9edf0;border-radius:100px;overflow:hidden;margin-top:20px}
+    .progress-fill{height:100%;width:0;background:#238578;border-radius:100px;transition:width .25s ease}
+    .noun-card{min-height:225px;margin-top:20px;border:1px solid #e4e8ec;border-radius:18px;background:linear-gradient(155deg,#f8faf9 0%,#edf3f2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;text-align:center}
+    .noun-label{font-size:11px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;color:#7c898e}
+    .noun{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-1.7px;line-height:1.2;margin:13px 0 9px;overflow-wrap:anywhere}
+    .translation{font-size:15px;color:#72838a}
+    .article-reveal{margin-top:13px;background:transparent;color:#276e67;text-decoration:underline;text-underline-offset:3px;border:0;font-size:13px;font-weight:700}
+    .answer-label{font-size:13px;font-weight:750;margin:19px 0 11px}
+    .choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+    .choice{background:#fff;border:2px solid #e1e7ec;border-radius:13px;padding:17px 4px;font-size:20px;font-weight:800;color:#26364a;transition:background .15s,border-color .15s}
+    .choice:hover:not(:disabled){background:#f0f5f3;border-color:#a8c3bd}
+    .choice.right{border-color:#238578;background:#ebf8f2;color:#126547;opacity:1}
+    .choice.wrong{border-color:#df7777;background:#fff0ef;color:#9d3434;opacity:1}
+    .type-row{display:flex;gap:10px}
+    .type-input{width:100%;border-radius:13px;border:2px solid #dfe6e9;padding:14px 16px;text-transform:lowercase;min-width:0;background:#fff;font-size:18px}
+    .btn{border:0;border-radius:12px;padding:13px 20px;background:#1b6f62;color:#fff;font-weight:750}
+    .btn:hover:not(:disabled){background:#155648}
+    .btn.alt{background:#edf2f4;color:#2d4855}
+    .btn.alt:hover:not(:disabled){background:#e2ebe9}
+    .feedback{border:1px solid #c8e7dc;background:#effaf5;color:#1c5b45;border-radius:14px;padding:14px 16px;margin-top:15px}
+    .feedback.bad{background:#fff4f1;border-color:#f0d7d2;color:#8d4339}
+    .feedback strong{display:block;font-size:15px;margin-bottom:3px}
+    .feedback p{margin:0;font-size:13px}
+    .actions{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:18px}
+    .subtle{color:var(--sub);font-size:12px}
+    .empty{background:#f8faf9;border:1px dashed #cad8d4;border-radius:16px;text-align:center;padding:32px 20px;margin-top:21px}
+    .empty h3{margin:5px 0;font-size:18px}
+    .empty p{color:var(--sub);margin:4px auto 19px;max-width:380px;font-size:13px}
+    .side-title{font-size:17px;letter-spacing:-.4px;font-weight:800;margin:0 0 4px}
+    .side-desc{font-size:12px;color:var(--sub);margin:0 0 16px}
+    .article-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 0;font-size:13px}
+    .article-row:last-child{border:0}
+    .article-row strong{font-size:15px}
+    .article-pill{border-radius:8px;padding:3px 9px;font-weight:850;margin-right:8px}
+    .der{background:#e5eeff;color:#335fa2}.die{background:#ffe7e8;color:#ae4a58}.das{background:#def6ef;color:#1d8269}
+    .note{margin-top:15px;background:#f2f6f6;color:#61757c;padding:12px;border-radius:10px;font-size:12px}
+    .library{margin-top:20px}
+    .library-toolbar{display:flex;gap:9px;align-items:center;justify-content:space-between}
+    .search{width:100%;min-width:0;border:1px solid #dfe6e9;border-radius:10px;padding:11px 12px}
+    .word-list{max-height:280px;overflow:auto;margin-top:12px}
+    .word-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #edf1f2;font-size:13px}
+    .word-line:last-child{border:0}
+    .word-line small{color:#8b98a5}
+    .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:28px;color:#758496;font-size:12px}
+    .link-button{background:none;border:0;text-decoration:underline;color:#647585;padding:4px}
+    [hidden]{display:none!important}
+    @media(max-width:780px){.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.main{grid-template-columns:1fr}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
+    @media(max-width:440px){.chip{display:none}.tab{font-size:12px;padding:12px 5px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="identity"><div class="logo" aria-hidden="true">A.</div><div><div class="brand">Artikel Studio</div><div class="brand-sub">German nouns, finally remembered.</div></div></div>
+      <span class="chip">A1 learning · Silent mode</span>
+    </header>
+    <section class="hero" aria-labelledby="hero-title">
+      <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>100 essential German words, three focused study modes, and review that learns from your mistakes. No sound or microphone needed.</p></div>
+      <div class="hero-mark" aria-hidden="true">der<br>die<br>das.</div>
+    </section>
+    <section class="stats" aria-label="Your progress">
+      <div class="stat"><div class="num" id="stat-mastered">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Words mastered</div></div>
+      <div class="stat"><div class="num" id="stat-accuracy">—</div><div class="lab">Overall accuracy</div></div>
+      <div class="stat"><div class="num" id="stat-review">0</div><div class="lab">Words to review</div></div>
+    </section>
+    <main class="main">
+      <section class="panel" aria-label="Study session">
+        <nav class="tabbar" aria-label="Study modes">
+          <button class="tab active" data-mode="challenge" aria-pressed="true">01 · Challenge</button>
+          <button class="tab" data-mode="type" aria-pressed="false">02 · Type it</button>
+          <button class="tab" data-mode="review" aria-pressed="false">03 · Mistake Hunter</button>
+        </nav>
+        <div class="panel-pad">
+          <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Article Challenge</h2><p class="mode-desc" id="mode-desc">Choose the correct article. Reveal it if you need help.</p></div><span class="small-count" id="question-count">1 / 10</span></div>
+          <div class="progress-track" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+          <div id="exercise">
+            <div class="noun-card"><div class="noun-label">Which article belongs to this noun?</div><div class="noun" id="noun">Haus</div><div class="translation" id="translation">House</div><button class="article-reveal" id="reveal">Reveal article (counts as a hint)</button></div>
+            <p class="answer-label" id="answer-label">Choose der, die or das</p>
+            <div class="choices" id="choices">
+              <button class="choice" data-article="der">der</button><button class="choice" data-article="die">die</button><button class="choice" data-article="das">das</button>
+            </div>
+            <form class="type-row" id="type-form" hidden><input class="type-input" id="type-input" aria-label="Type the article" placeholder="Type der, die or das" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="10" required><button class="btn" type="submit">Check</button></form>
+            <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
+            <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><button class="btn" id="next" hidden>Next word →</button></div>
+          </div>
+          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another round</button></div>
+        </div>
+      </section>
+      <aside>
+        <section class="panel"><div class="panel-pad">
+          <h2 class="side-title">Your article cheat sheet</h2><p class="side-desc">Learn the noun with its article, as one unit.</p>
+          <div class="article-row"><span><span class="article-pill der">der</span> Masculine</span><strong>der Park</strong></div>
+          <div class="article-row"><span><span class="article-pill die">die</span> Feminine</span><strong>die Schule</strong></div>
+          <div class="article-row"><span><span class="article-pill das">das</span> Neuter</span><strong>das Buch</strong></div>
+          <div class="note">Tip: Say the complete phrase in your mind — “der Schlüssel”, never just “Schlüssel”. <strong>die Eltern</strong> is plural, not feminine.</div>
+        </div></section>
+        <section class="panel library"><div class="panel-pad">
+          <h2 class="side-title">Your 100-word library</h2><p class="side-desc">The exact words from your original German PDF.</p>
+          <div class="library-toolbar"><input id="search" class="search" type="search" placeholder="Find a word or translation…" aria-label="Search words"></div>
+          <div id="word-list" class="word-list" aria-live="polite"></div>
+        </div></section>
+      </aside>
+    </main>
+    <footer class="footer"><span>Progress stays in this browser. No account, audio, or payment required.</span><button class="link-button" id="reset">Reset all learning progress</button></footer>
+  </div>
+  <script>
+    "use strict";
+    // Article and nouns exactly match the learner's original 100-word PDF.
+    const raw = [
+      ["der","Mensch","Person"],["der","Mann","Man"],["die","Frau","Woman"],["das","Kind","Child"],
+      ["die","Familie","Family"],["die","Mutter","Mother"],["der","Vater","Father"],["der","Freund","Male friend"],
+      ["der","Name","Name"],["das","Leben","Life"],["die","Zeit","Time"],["der","Tag","Day"],
+      ["die","Woche","Week"],["der","Monat","Month"],["das","Jahr","Year"],["die","Stunde","Hour"],
+      ["die","Minute","Minute"],["der","Morgen","Morning"],["der","Abend","Evening"],["die","Nacht","Night"],
+      ["das","Haus","House"],["die","Wohnung","Apartment"],["das","Zimmer","Room"],["die","Tür","Door"],
+      ["das","Fenster","Window"],["der","Tisch","Table"],["der","Stuhl","Chair"],["das","Bett","Bed"],
+      ["die","Küche","Kitchen"],["das","Bad","Bathroom"],["die","Arbeit","Work"],["die","Schule","School"],
+      ["das","Geld","Money"],["das","Essen","Food"],["das","Wasser","Water"],["das","Brot","Bread"],
+      ["der","Kaffee","Coffee"],["das","Auto","Car"],["der","Bus","Bus"],["die","Straße","Street"],
+      ["die","Stadt","City"],["das","Land","Country"],["die","Welt","World"],["der","Ort","Place"],
+      ["der","Weg","Way"],["die","Frage","Question"],["die","Antwort","Answer"],["das","Problem","Problem"],
+      ["die","Hand","Hand"],["der","Kopf","Head"],["die","Eltern","Parents (plural)"],["der","Bruder","Brother"],
+      ["die","Schwester","Sister"],["die","Tochter","Daughter"],["der","Sohn","Son"],["die","Freundin","Female friend"],
+      ["der","Arzt","Male doctor"],["die","Ärztin","Female doctor"],["der","Nachbar","Neighbor"],["der","Kollege","Colleague"],
+      ["der","Bahnhof","Train station"],["der","Zug","Train"],["die","Bahn","Railway"],["die","Haltestelle","Stop"],
+      ["der","Flughafen","Airport"],["das","Fahrrad","Bicycle"],["das","Ticket","Ticket"],["die","Reise","Trip"],
+      ["der","Urlaub","Vacation"],["das","Hotel","Hotel"],["die","Milch","Milk"],["der","Tee","Tea"],
+      ["der","Saft","Juice"],["das","Obst","Fruit"],["das","Gemüse","Vegetables"],["der","Apfel","Apple"],
+      ["die","Kartoffel","Potato"],["das","Ei","Egg"],["der","Käse","Cheese"],["das","Fleisch","Meat"],
+      ["das","Handy","Mobile phone"],["der","Computer","Computer"],["das","Buch","Book"],["die","Tasche","Bag"],
+      ["der","Schlüssel","Key"],["die","Kleidung","Clothing"],["der","Schuh","Shoe"],["die","Jacke","Jacket"],
+      ["die","Brille","Glasses"],["die","Uhr","Clock / watch"],["der","Termin","Appointment"],["die","Nummer","Number"],
+      ["die","Adresse","Address"],["die","Sprache","Language"],["das","Wort","Word"],["das","Geschäft","Shop"],
+      ["der","Preis","Price"],["die","Rechnung","Invoice"],["die","Hilfe","Help"],["das","Wetter","Weather"]
+    ];
+    const words = raw.map((r,i)=>({id:i,article:r[0],noun:r[1],english:r[2]}));
+    const STORAGE_KEY = "artikel-studio-v1";
+    let progress={};
+    try {
+      const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
+      if(stored && typeof stored==="object" && !Array.isArray(stored)) progress=stored;
+    } catch (_) { progress={}; }
+    const $=id=>document.getElementById(id);
+    let mode="challenge", queue=[],index=0,roundCorrect=0,answered=false,usedHint=false;
+    function record(id){const p=progress[id];return p&&typeof p==="object"?p:{seen:0,correct:0,wrong:0,streak:0};}
+    function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));}catch(_){}}
+    function isMastered(w){return record(w.id).streak>=3;}
+    function isWeak(w){const p=record(w.id);return p.wrong>0&&!isMastered(w);}
+    function shuffle(arr){const out=arr.slice();for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
+    function poolFor(m){
+      if(m==="review"){
+        // Revisit every word with mistakes until three consecutive correct answers.
+        return shuffle(words.filter(isWeak)).sort((a,b)=>{
+          const pa=record(a.id),pb=record(b.id);return (pb.wrong-pb.correct*.15)-(pa.wrong-pa.correct*.15);
+        }).slice(0,10);
+      }
+      // Learn previously unseen nouns first; then keep practicing imperfect ones.
+      return shuffle(words).sort((a,b)=>{
+        const pa=record(a.id),pb=record(b.id);
+        const sa=pa.seen+(isMastered(a)?100:0)-Math.min(pa.wrong,3)*.3;
+        const sb=pb.seen+(isMastered(b)?100:0)-Math.min(pb.wrong,3)*.3;
+        return sa-sb;
+      }).slice(0,10);
+    }
+    function updateStats(){
+      const vals=words.map(w=>record(w.id));
+      const seen=vals.reduce((n,p)=>n+p.seen,0),good=vals.reduce((n,p)=>n+p.correct,0);
+      const mastered=words.filter(isMastered).length,weak=words.filter(isWeak).length;
+      $("stat-mastered").innerHTML=mastered+'<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("stat-accuracy").textContent=seen?Math.round(good/seen*100)+"%":"—";
+      $("stat-review").textContent=weak;
+    }
+    function start(m){
+      mode=m;queue=poolFor(mode);index=0;roundCorrect=0;answered=false;usedHint=false;
+      document.querySelectorAll(".tab").forEach(t=>{const active=t.dataset.mode===m;t.classList.toggle("active",active);t.setAttribute("aria-pressed",String(active));});
+      const titles={challenge:["Article Challenge","Tap der, die or das. Reveal the article only if you need help."],type:["Type the Article","Recall it yourself: type der, die or das, then check."],review:["Mistake Hunter","Only words you've missed before. Clear them with three correct recalls in a row."]};
+      $("mode-title").textContent=titles[m][0];$("mode-desc").textContent=titles[m][1];
+      render();
+    }
+    function render(){
+      const completed=index>=queue.length;
+      $("exercise").hidden=completed;$("empty").hidden=!completed;
+      $("question-count").textContent=completed?queue.length+" / "+queue.length:(index+1)+" / "+queue.length;
+      const pct=queue.length?Math.round(index/queue.length*100):100;
+      $("progress-fill").style.width=pct+"%";
+      $("progress-track").setAttribute("aria-valuemax",String(queue.length||10));
+      $("progress-track").setAttribute("aria-valuenow",String(index));
+      if(completed){
+        const isNone=mode==="review"&&queue.length===0;
+        $("empty-title").textContent=isNone?"No mistakes to review!":"Round complete";
+        $("empty-message").textContent=isNone?"Try Article Challenge or Type the Article first. Missed nouns will appear here automatically.":roundCorrect+" / "+queue.length+" correct without hints. Keep practising — every attempt strengthens your recall.";
+        $("restart").textContent=isNone?"Start Article Challenge":"Start another round";
+        updateStats();return;
+      }
+      const w=queue[index];answered=false;usedHint=false;
+      $("noun").textContent=w.noun;$("translation").textContent=w.english;
+      $("reveal").hidden=false;$("reveal").disabled=false;$("reveal").textContent="Reveal article (counts as a hint)";
+      $("feedback").hidden=true;$("next").hidden=true;$("session-score").textContent=roundCorrect+" correct without hints";
+      $("choices").hidden=mode==="type";$("type-form").hidden=mode!=="type";
+      $("answer-label").textContent=mode==="type"?"Type the missing article":"Choose der, die or das";
+      document.querySelectorAll(".choice").forEach(b=>{b.disabled=false;b.classList.remove("right","wrong");});
+      $("type-input").disabled=false;$("type-input").value="";
+      if(mode==="type") $("type-input").focus({preventScroll:true});
+    }
+    function explain(w){
+      return w.noun==="Eltern"?"“die Eltern” is plural; “die” is the plural definite article.":"Remember this as one phrase: "+w.article+" "+w.noun+".";
+    }
+    function submit(value,showOnly){
+      if(answered||index>=queue.length)return;
+      const w=queue[index],guess=value.trim().toLowerCase(),correct=!showOnly&&guess===w.article;
+      answered=true;usedHint=showOnly;
+      const p=record(w.id);
+      p.seen+=1;
+      if(correct){p.correct+=1;p.streak+=1;if(!showOnly)roundCorrect+=1;}
+      else{p.wrong+=1;p.streak=0;}
+      p.last=Date.now();progress[w.id]=p;save();
+      $("feedback").hidden=false;$("feedback").classList.toggle("bad",!correct);
+      $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Answer revealed: "+w.article+" "+w.noun:"The article is "+w.article+" — "+w.article+" "+w.noun;
+      $("feedback-desc").textContent=(correct?"Great recall. ":"")+explain(w)+(isMastered(w)?" You have mastered this word!":"");
+      $("reveal").hidden=true;$("next").hidden=false;$("session-score").textContent=roundCorrect+" correct without hints";
+      document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;b.classList.toggle("right",b.dataset.article===w.article);b.classList.toggle("wrong",!correct&&b.dataset.article===guess&&guess!==w.article);});
+      $("type-input").disabled=true;
+      $("next").textContent=index===queue.length-1?"See results →":"Next word →";
+      updateStats();
+    }
+    document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>start(t.dataset.mode)));
+    document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>submit(b.dataset.article,false)));
+    $("type-form").addEventListener("submit",e=>{e.preventDefault();const input=$("type-input").value.trim().toLowerCase();if(input)submit(input,false);});
+    $("reveal").addEventListener("click",()=>submit("",true));
+    $("next").addEventListener("click",()=>{index++;render();});
+    $("restart").addEventListener("click",()=>start(mode==="review"&&queue.length===0?"challenge":mode));
+    $("reset").addEventListener("click",()=>{if(!confirm("Reset your saved accuracy, mistakes and mastery on this browser?"))return;progress={};save();start("challenge");renderLibrary($("search").value);});
+    function renderLibrary(term){
+      const q=term.trim().toLocaleLowerCase("de-DE");
+      const found=words.filter(w=>(w.noun+" "+w.article+" "+w.english).toLocaleLowerCase("de-DE").includes(q));
+      const root=$("word-list");root.replaceChildren();
+      if(!found.length){const p=document.createElement("p");p.className="subtle";p.textContent="No matching words.";root.appendChild(p);return;}
+      for(const w of found){
+        const line=document.createElement("div");line.className="word-line";
+        const left=document.createElement("span"),badge=document.createElement("span"),label=document.createElement("span"),en=document.createElement("small");
+        badge.className="article-pill "+w.article;badge.textContent=w.article;
+        label.textContent=w.noun;left.append(badge,label);en.textContent=w.english;line.append(left,en);root.appendChild(line);
+      }
+    }
+    $("search").addEventListener("input",e=>renderLibrary(e.target.value));
+    if(words.length!==100||new Set(words.map(w=>w.noun)).size!==100)console.error("Vocabulary data is not exactly 100 unique nouns.");
+    renderLibrary("");updateStats();start("challenge");
+  </script>
+</body>
+</html>
