@@ -309,8 +309,10 @@
       if (finished) {
         $("empty-title").textContent=completedCount>=SESSION_LIMIT?"Session complete!":words.every(isMastered)?"All 100 words mastered!":"All caught up for now";
         $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+describeWait();
-        $("restart").textContent=words.every(isMastered)?"All words mastered":"Start another session";
-        $("restart").disabled=words.every(isMastered) || !words.some(w=>!isMastered(w)&&dueAt(w)<=Date.now());
+        const allMastered=words.every(isMastered);
+        const hasDue=words.some(w=>!isMastered(w)&&dueAt(w)<=Date.now());
+        $("restart").textContent=allMastered?"All words mastered":hasDue?"Start another session":"Check for due words";
+        $("restart").disabled=allMastered;
         updateStats();return;
       }
       answered=false;
