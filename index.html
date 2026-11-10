@@ -34,10 +34,10 @@
     .main{display:block;min-width:0}
     .panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
     .panel-pad{padding:24px}
-    .tabbar{display:flex;gap:6px;padding:7px;border-bottom:1px solid var(--line);background:#fbfcfd}
-    .tab{border:0;background:transparent;border-radius:12px;padding:13px 11px;flex:1 1 0;min-width:0;line-height:1.35;font-weight:700;font-size:13px;color:#66758a}
-    .tab.active{background:#e9f2ef;color:#165b50}
-    .tab:focus-visible{outline-offset:-3px}
+    .session-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;background:#fbfcfd;border-bottom:1px solid var(--line)}
+    .mode-tag{color:#175a51;background:#e8f4ef;font-size:10px;font-weight:850;letter-spacing:1.2px;border-radius:8px;padding:7px 10px;white-space:nowrap}
+    .word-progress{font-size:12px;color:#7a888d;margin-top:8px}
+    .rules-note{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:#74808a}
     .mode-title{font-size:22px;letter-spacing:-.65px;margin:0}
     .mode-desc{color:var(--sub);font-size:13px;margin:6px 0 0}
     .quiz-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -74,8 +74,8 @@
     .link-button{background:none;border:0;text-decoration:underline;color:#647585;padding:4px}
     [hidden]{display:none!important}
     @media(max-width:780px){.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
-    @media(max-width:440px){.chip{display:none}.tab{font-size:11.5px;padding:12px 4px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
-    @media(max-width:360px){.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.tab{font-size:11px;padding:11px 2px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
+    @media(max-width:440px){.chip{display:none}.session-heading{padding:13px 18px;gap:8px}.session-heading .small-count{font-size:11px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
+    @media(max-width:360px){.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
   </style>
 </head>
@@ -86,7 +86,7 @@
       <span class="chip">A1 learning · Silent mode</span>
     </header>
     <section class="hero" aria-labelledby="hero-title">
-      <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>100 essential German words, three focused study modes, and review that learns from your mistakes. No sound or microphone needed.</p></div>
+      <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>100 essential German nouns in one adaptive 30-question session. Mistakes return sooner; mastered words retire. No microphone needed.</p></div>
       <div class="hero-mark" aria-hidden="true">der<br>die<br>das.</div>
     </section>
     <section class="stats" aria-label="Your progress">
@@ -96,16 +96,12 @@
     </section>
     <main class="main">
       <section class="panel" aria-label="Study session">
-        <nav class="tabbar" aria-label="Study modes">
-          <button class="tab active" data-mode="challenge" aria-pressed="true">01 · Challenge</button>
-          <button class="tab" data-mode="type" aria-pressed="false">02 · Type it</button>
-          <button class="tab" data-mode="review" aria-pressed="false">03 · Mistake Hunter</button>
-        </nav>
+        <div class="session-heading"><span class="mode-tag">ONE ADAPTIVE SESSION</span><span class="small-count">30 questions · mixed formats</span></div>
         <div class="panel-pad">
-          <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Article Challenge</h2><p class="mode-desc" id="mode-desc">Choose the correct article. Reveal it if you need help.</p></div><span class="small-count" id="question-count">1 / 10</span></div>
-          <div class="progress-track" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Smart Article Practice</h2><p class="mode-desc" id="mode-desc">Choose or type the article. Missed words return sooner.</p></div><span class="small-count" id="question-count">1 / 30</span></div>
+          <div class="progress-track" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
           <div id="exercise">
-            <div class="noun-card"><div class="noun-label">Which article belongs to this noun?</div><div class="noun" id="noun">Haus</div><div class="translation" id="translation">House</div><button class="article-reveal" id="reveal">Reveal article (counts as a hint)</button></div>
+            <div class="noun-card"><div class="noun-label">Which article belongs to this noun?</div><div class="noun" id="noun">Haus</div><div class="translation" id="translation">House</div><div class="word-progress" id="word-progress"></div><button class="article-reveal" id="reveal">Reveal article (counts as a hint)</button></div>
             <p class="answer-label" id="answer-label">Choose der, die or das</p>
             <div class="choices" id="choices">
               <button class="choice" data-article="der">der</button><button class="choice" data-article="die">die</button><button class="choice" data-article="das">das</button>
@@ -114,7 +110,7 @@
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
             <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
-          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another round</button></div>
+          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A word is mastered after <strong>3 correct choices + 2 correct typed answers</strong>. The final two attempts unlock after a 48-hour pause. Correct recalls are spaced apart; mistakes come back sooner.</div>
         </div>
       </section>
 
@@ -152,115 +148,249 @@
       ["der","Preis","Price"],["die","Rechnung","Invoice"],["die","Hilfe","Help"],["das","Wetter","Weather"]
     ];
     const words = raw.map((r,i)=>({id:i,article:r[0],noun:r[1],english:r[2]}));
-    const STORAGE_KEY = "artikel-studio-v1";
-    let progress={};
+
+    // The v2 mastery model counts only correct answers with a known question format.
+    // Legacy attempts/mistakes are retained, but legacy correct answers cannot count
+    // toward the new 3-MCQ + 2-typing mastery rule.
+    const STORAGE_KEY = "artikel-studio-v2";
+    const LEGACY_KEY = "artikel-studio-v1";
+    const SESSION_LIMIT = 30;
+    const FIRST_STAGE = ["choice","choice","type"];
+    const TARGET_COUNTS = {choice:3,type:2};
+    const SHORT_GAP = 20 * 60 * 1000;      // Different review interval (20 minutes).
+    const TWO_DAYS = 48 * 60 * 60 * 1000; // Pause after third correct recall.
+    const FINAL_GAP = 6 * 60 * 60 * 1000; // Space the two delayed answers.
+    const $ = id => document.getElementById(id);
+
+    let progress = {};
     try {
-      const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
-      if(stored && typeof stored==="object" && !Array.isArray(stored)) progress=stored;
-    } catch (_) { progress={}; }
-    const $=id=>document.getElementById(id);
-    let mode="challenge", queue=[],index=0,roundCorrect=0,answered=false,usedHint=false;
-    let advanceTimer=null;
-    function cancelAdvance(){
-      if(advanceTimer!==null){clearTimeout(advanceTimer);advanceTimer=null;}
-    }
-    function scheduleAdvance(delayMs){
-      cancelAdvance();
-      advanceTimer=setTimeout(()=>{advanceTimer=null;index++;render();},delayMs);
-    }
-    function record(id){const p=progress[id];return p&&typeof p==="object"?p:{seen:0,correct:0,wrong:0,streak:0};}
-    function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));}catch(_){}}
-    function isMastered(w){return record(w.id).streak>=3;}
-    function isWeak(w){const p=record(w.id);return p.wrong>0&&!isMastered(w);}
-    function shuffle(arr){const out=arr.slice();for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
-    function poolFor(m){
-      if(m==="review"){
-        // Revisit every word with mistakes until three consecutive correct answers.
-        return shuffle(words.filter(isWeak)).sort((a,b)=>{
-          const pa=record(a.id),pb=record(b.id);return (pb.wrong-pb.correct*.15)-(pa.wrong-pa.correct*.15);
-        }).slice(0,10);
+      const oldData = JSON.parse(localStorage.getItem(LEGACY_KEY) || "{}");
+      const newData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (newData && typeof newData === "object" && !Array.isArray(newData)) {
+        progress = newData;
+      } else if (oldData && typeof oldData === "object" && !Array.isArray(oldData)) {
+        for (const [id,p] of Object.entries(oldData)) {
+          if (!p || typeof p !== "object") continue;
+          progress[id] = {
+            seen: Number(p.seen) || 0,
+            correct: Number(p.correct) || 0,
+            wrong: Number(p.wrong) || 0,
+            successes: [],
+            lastWrongAt: (Number(p.wrong) || 0) ? (Number(p.last) || 0) : 0
+          };
+        }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (_) {}
       }
-      // Learn previously unseen nouns first; then keep practicing imperfect ones.
-      return shuffle(words).sort((a,b)=>{
-        const pa=record(a.id),pb=record(b.id);
-        const sa=pa.seen+(isMastered(a)?100:0)-Math.min(pa.wrong,3)*.3;
-        const sb=pb.seen+(isMastered(b)?100:0)-Math.min(pb.wrong,3)*.3;
-        return sa-sb;
-      }).slice(0,10);
+    } catch (_) { progress = {}; }
+
+    let completedCount = 0;
+    let roundCorrect = 0;
+    let answered = false;
+    let current = null;
+    let currentMode = "choice";
+    let seenThisSession = new Set();
+    let retryAt = new Map();
+    let advanceTimer = null;
+
+    function cancelAdvance() {
+      if (advanceTimer !== null) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+      }
     }
-    function updateStats(){
-      const vals=words.map(w=>record(w.id));
-      const seen=vals.reduce((n,p)=>n+p.seen,0),good=vals.reduce((n,p)=>n+p.correct,0);
-      const mastered=words.filter(isMastered).length,weak=words.filter(isWeak).length;
-      $("stat-mastered").innerHTML=mastered+'<span style="color:#93a1af;font-size:15px">/100</span>';
-      $("stat-accuracy").textContent=seen?Math.round(good/seen*100)+"%":"—";
-      $("stat-review").textContent=weak;
+    function record(id) {
+      const p = progress[id];
+      if (!p || typeof p !== "object") return {seen:0,correct:0,wrong:0,successes:[],lastWrongAt:0};
+      return {
+        seen: Number(p.seen) || 0,
+        correct: Number(p.correct) || 0,
+        wrong: Number(p.wrong) || 0,
+        successes: Array.isArray(p.successes) ? p.successes.filter(x=>x && (x.mode==="choice" || x.mode==="type") && Number.isFinite(Number(x.at))) : [],
+        lastWrongAt: Number(p.lastWrongAt) || 0
+      };
     }
-    function start(m){
+    function counts(p) {
+      return {choice:p.successes.filter(x=>x.mode==="choice").length,type:p.successes.filter(x=>x.mode==="type").length};
+    }
+    function isMastered(w) {
+      const c = counts(record(w.id));
+      return c.choice >= TARGET_COUNTS.choice && c.type >= TARGET_COUNTS.type;
+    }
+    function isWeak(w) { return record(w.id).wrong > 0 && !isMastered(w); }
+    function saved() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (_) {} }
+    function shuffle(array) {
+      const a = array.slice();
+      for (let i=a.length-1;i>0;i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+    function dueAt(w) {
+      if (isMastered(w)) return Infinity;
+      const successes = record(w.id).successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
+      if (!successes.length) return 0;
+      const latest = Number(successes[successes.length-1].at);
+      let eligible = latest + SHORT_GAP;
+      if (successes.length === 3) eligible = Math.max(eligible, latest + TWO_DAYS);
+      if (successes.length >= 4) eligible = Math.max(eligible, latest + FINAL_GAP);
+      // No noun may earn more than three correct answers within any rolling 48h.
+      const now=Date.now();
+      const recent = successes.filter(x=>Number(x.at) > now - TWO_DAYS);
+      if (recent.length >= 3) {
+        eligible = Math.max(eligible, Number(recent[recent.length-3].at) + TWO_DAYS);
+      }
+      return eligible;
+    }
+    function chooseMode(w) {
+      const p=record(w.id), c=counts(p), total=p.successes.length;
+      if (total < 3) {
+        // Early stage contains exactly 2 multiple choice successes and 1 typed.
+        if (c.choice>=2) return "type";
+        if (c.type>=1) return "choice";
+        return Math.random()<0.36?"type":"choice";
+      }
+      if (c.choice>=3) return "type";
+      if (c.type>=2) return "choice";
+      return Math.random()<0.5?"type":"choice";
+    }
+    function chooseWord() {
+      const now=Date.now();
+      const eligible=words.filter(w=>!isMastered(w) && dueAt(w)<=now);
+      const immediate=eligible.filter(w=>retryAt.has(w.id) && retryAt.get(w.id)<=completedCount);
+      const fresh=eligible.filter(w=>!seenThisSession.has(w.id));
+      if (immediate.length && (!fresh.length || Math.random()<0.72)) {
+        return shuffle(immediate).sort((a,b)=>record(b.id).wrong-record(a.id).wrong)[0];
+      }
+      if (fresh.length) {
+        // Mix previously missed words with new words; prioritize mistakes ~45%.
+        const weak=fresh.filter(isWeak);
+        const other=fresh.filter(w=>!isWeak(w));
+        const pool=weak.length && (!other.length || Math.random()<0.45) ? weak : other.length?other:weak;
+        return shuffle(pool).sort((a,b)=>record(a.id).successes.length-record(b.id).successes.length)[0];
+      }
+      return immediate.length ? shuffle(immediate)[0] : null;
+    }
+    function updateStats() {
+      const entries=words.map(w=>record(w.id));
+      const tried=entries.reduce((t,p)=>t+p.seen,0);
+      const right=entries.reduce((t,p)=>t+p.correct,0);
+      $("stat-mastered").innerHTML=words.filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
+      $("stat-review").textContent=words.filter(isWeak).length;
+    }
+    function startSession() {
       cancelAdvance();
-      mode=m;queue=poolFor(mode);index=0;roundCorrect=0;answered=false;usedHint=false;
-      document.querySelectorAll(".tab").forEach(t=>{const active=t.dataset.mode===m;t.classList.toggle("active",active);t.setAttribute("aria-pressed",String(active));});
-      const titles={challenge:["Article Challenge","Tap der, die or das. Reveal the article only if you need help."],type:["Type the Article","Recall it yourself: type der, die or das, then check."],review:["Mistake Hunter","Only words you've missed before. Clear them with three correct recalls in a row."]};
-      $("mode-title").textContent=titles[m][0];$("mode-desc").textContent=titles[m][1];
+      completedCount=0;roundCorrect=0;answered=false;current=null;
+      seenThisSession=new Set();retryAt=new Map();
       render();
     }
-    function render(){
+    function describeWait() {
+      const outstanding=words.filter(w=>!isMastered(w));
+      if (!outstanding.length) return "All 100 nouns are mastered. You have completed the course!";
+      const earliest=Math.min(...outstanding.map(dueAt));
+      const wait=Math.max(0,earliest-Date.now());
+      if (wait<=0) return "There are more words ready now. Start a new session to continue.";
+      if (wait<60*60*1000) return "Your next spaced review unlocks in about "+Math.ceil(wait/(60*1000))+" minutes.";
+      if (wait<24*60*60*1000) return "Your next spaced review unlocks in about "+Math.ceil(wait/(60*60*1000))+" hours.";
+      return "Your next spaced review unlocks in about "+Math.ceil(wait/(24*60*60*1000))+" days.";
+    }
+    function render() {
       cancelAdvance();
-      const completed=index>=queue.length;
-      $("exercise").hidden=completed;$("empty").hidden=!completed;
-      $("question-count").textContent=completed?queue.length+" / "+queue.length:(index+1)+" / "+queue.length;
-      const pct=queue.length?Math.round(index/queue.length*100):100;
-      $("progress-fill").style.width=pct+"%";
-      $("progress-track").setAttribute("aria-valuemax",String(queue.length||10));
-      $("progress-track").setAttribute("aria-valuenow",String(index));
-      if(completed){
-        const isNone=mode==="review"&&queue.length===0;
-        $("empty-title").textContent=isNone?"No mistakes to review!":"Round complete";
-        $("empty-message").textContent=isNone?"Try Article Challenge or Type the Article first. Missed nouns will appear here automatically.":roundCorrect+" / "+queue.length+" correct without hints. Keep practising — every attempt strengthens your recall.";
-        $("restart").textContent=isNone?"Start Article Challenge":"Start another round";
+      if (completedCount >= SESSION_LIMIT) current=null;
+      if (!current && completedCount < SESSION_LIMIT) current=chooseWord();
+      const finished=completedCount>=SESSION_LIMIT || !current;
+      $("exercise").hidden=finished;
+      $("empty").hidden=!finished;
+      $("question-count").textContent=finished?completedCount+" / "+SESSION_LIMIT:(completedCount+1)+" / "+SESSION_LIMIT;
+      $("progress-fill").style.width=(completedCount/SESSION_LIMIT*100)+"%";
+      $("progress-track").setAttribute("aria-valuemax",String(SESSION_LIMIT));
+      $("progress-track").setAttribute("aria-valuenow",String(completedCount));
+      if (finished) {
+        $("empty-title").textContent=completedCount>=SESSION_LIMIT?"Session complete!":words.every(isMastered)?"All 100 words mastered!":"All caught up for now";
+        $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+describeWait();
+        $("restart").textContent=words.every(isMastered)?"All words mastered":"Start another session";
+        $("restart").disabled=words.every(isMastered) || !words.some(w=>!isMastered(w)&&dueAt(w)<=Date.now());
         updateStats();return;
       }
-      const w=queue[index];answered=false;usedHint=false;
-      $("noun").textContent=w.noun;$("translation").textContent=w.english;
-      $("reveal").hidden=false;$("reveal").disabled=false;$("reveal").textContent="Reveal article (counts as a hint)";
-      $("feedback").hidden=true;$("advance-note").textContent="";$("session-score").textContent=roundCorrect+" correct without hints";
-      $("choices").hidden=mode==="type";$("type-form").hidden=mode!=="type";
-      $("answer-label").textContent=mode==="type"?"Type the missing article":"Choose der, die or das";
-      document.querySelectorAll(".choice").forEach(b=>{b.disabled=false;b.classList.remove("right","wrong");});
+      answered=false;
+      currentMode=chooseMode(current);
+      seenThisSession.add(current.id);
+      const c=counts(record(current.id));
+      $("noun").textContent=current.noun;
+      $("translation").textContent=current.english;
+      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct";
+      $("reveal").hidden=false;$("reveal").disabled=false;
+      $("feedback").hidden=true;$("advance-note").textContent="";
+      $("session-score").textContent=roundCorrect+" correct this session";
+      $("choices").hidden=currentMode!=="choice";
+      $("type-form").hidden=currentMode!=="type";
+      $("answer-label").textContent=currentMode==="type"?"WRITE THE ARTICLE · Type der, die or das":"MULTIPLE CHOICE · Choose the correct article";
+      document.querySelectorAll(".choice").forEach(b=>{
+        b.disabled=false;b.classList.remove("right","wrong");
+      });
       $("type-input").disabled=false;$("type-input").value="";
-      if(mode==="type") $("type-input").focus({preventScroll:true});
+      // Avoid popping up the phone keyboard before the user taps the input.
     }
-    function explain(w){
-      return w.noun==="Eltern"?"“die Eltern” is plural; “die” is the plural definite article.":"Remember this as one phrase: "+w.article+" "+w.noun+".";
+    function explain(w) {
+      return w.noun==="Eltern"?"“die Eltern” is plural, so its article is always die.":"Remember the whole phrase: "+w.article+" "+w.noun+".";
     }
-    function submit(value,showOnly){
-      if(answered||index>=queue.length)return;
-      const w=queue[index],guess=value.trim().toLowerCase(),correct=!showOnly&&guess===w.article;
-      answered=true;usedHint=showOnly;
+    function submit(value,showOnly=false) {
+      if (answered||!current)return;
+      const w=current;
+      const guess=value.trim().toLowerCase();
+      const correct=!showOnly&&guess===w.article;
+      answered=true;
       const p=record(w.id);
-      p.seen+=1;
-      if(correct){p.correct+=1;p.streak+=1;if(!showOnly)roundCorrect+=1;}
-      else{p.wrong+=1;p.streak=0;}
-      p.last=Date.now();progress[w.id]=p;save();
-      $("feedback").hidden=false;$("feedback").classList.toggle("bad",!correct);
-      $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Answer revealed: "+w.article+" "+w.noun:"The article is "+w.article+" — "+w.article+" "+w.noun;
-      $("feedback-desc").textContent=(correct?"Great recall. ":"")+explain(w)+(isMastered(w)?" You have mastered this word!":"");
-      $("reveal").hidden=true;$("session-score").textContent=roundCorrect+" correct without hints";
-      document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;b.classList.toggle("right",b.dataset.article===w.article);b.classList.toggle("wrong",!correct&&b.dataset.article===guess&&guess!==w.article);});
+      p.seen++;
+      if (correct) {
+        p.correct++;
+        p.successes.push({mode:currentMode,at:Date.now()});
+        roundCorrect++;
+        retryAt.delete(w.id);
+      } else {
+        p.wrong++;
+        p.lastWrongAt=Date.now();
+        // Repeat missed words after at least three intervening questions.
+        retryAt.set(w.id,completedCount+4);
+      }
+      progress[w.id]=p;saved();
+      completedCount++;
+      $("feedback").hidden=false;
+      $("feedback").classList.toggle("bad",!correct);
+      $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
+      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" You have mastered this noun. It will no longer appear.":correct?" You will review it again after a spaced interval.":" It will return for another attempt.");
+      $("reveal").hidden=true;
+      $("session-score").textContent=roundCorrect+" correct this session";
+      document.querySelectorAll(".choice").forEach(b=>{
+        b.disabled=true;
+        b.classList.toggle("right",b.dataset.article===w.article);
+        b.classList.toggle("wrong",!correct&&b.dataset.article===guess&&guess!==w.article);
+      });
       $("type-input").disabled=true;
-      const delayMs=correct?600:3000;
-      $("advance-note").textContent=correct?"Next word in 0.6s…":"Review answer for 3 seconds…";
+      $("advance-note").textContent=correct?"Next word in 0.6s…":"Review for 3 seconds…";
       updateStats();
-      scheduleAdvance(delayMs);
+      advanceTimer=setTimeout(()=>{
+        advanceTimer=null;
+        current=null;
+        render();
+      },correct?600:3000);
     }
-    document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>start(t.dataset.mode)));
-    document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>submit(b.dataset.article,false)));
-    $("type-form").addEventListener("submit",e=>{e.preventDefault();const input=$("type-input").value.trim().toLowerCase();if(input)submit(input,false);});
+    document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>submit(b.dataset.article)));
+    $("type-form").addEventListener("submit",e=>{
+      e.preventDefault();
+      const value=$("type-input").value.trim().toLowerCase();
+      if (value) submit(value);
+    });
     $("reveal").addEventListener("click",()=>submit("",true));
-    $("restart").addEventListener("click",()=>start(mode==="review"&&queue.length===0?"challenge":mode));
-    $("reset").addEventListener("click",()=>{if(!confirm("Reset your saved accuracy, mistakes and mastery on this browser?"))return;progress={};save();start("challenge");});
-    if(words.length!==100||new Set(words.map(w=>w.noun)).size!==100)console.error("Vocabulary data is not exactly 100 unique nouns.");
-    updateStats();start("challenge");
+    $("restart").addEventListener("click",startSession);
+    $("reset").addEventListener("click",()=>{
+      if (!confirm("Reset your saved accuracy, mistakes and mastery on this browser?")) return;
+      progress={};saved();updateStats();startSession();
+    });
+    if (words.length!==100 || new Set(words.map(w=>w.noun)).size!==100) console.error("Expected exactly 100 unique nouns.");
+    updateStats();
+    startSession();
   </script>
 </body>
 </html>
