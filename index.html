@@ -14,7 +14,7 @@
     button{cursor:pointer}
     button:focus-visible,input:focus-visible{outline:3px solid #8dc6bb;outline-offset:3px}
     button:disabled{opacity:.46;cursor:not-allowed}
-    .shell{max-width:1110px;margin:auto;padding:26px 24px 52px}
+    .shell{max-width:840px;margin:auto;padding:26px 24px 52px}
     header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
     .identity{display:flex;align-items:center;gap:12px}
     .logo{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#16253b;color:#fff;font-weight:800;font-size:21px;letter-spacing:-1px}
@@ -31,11 +31,11 @@
     .stat{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px 18px;box-shadow:var(--shadow)}
     .stat .num{font-size:27px;font-weight:800;letter-spacing:-.8px}
     .stat .lab{font-size:12px;color:var(--sub)}
-    .main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(275px,.9fr);gap:22px;align-items:start}
-    .panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+    .main{display:block;min-width:0}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
     .panel-pad{padding:24px}
     .tabbar{display:flex;gap:6px;padding:7px;border-bottom:1px solid var(--line);background:#fbfcfd}
-    .tab{border:0;background:transparent;border-radius:12px;padding:13px 11px;flex:1;font-weight:700;font-size:13px;color:#66758a}
+    .tab{border:0;background:transparent;border-radius:12px;padding:13px 11px;flex:1 1 0;min-width:0;line-height:1.35;font-weight:700;font-size:13px;color:#66758a}
     .tab.active{background:#e9f2ef;color:#165b50}
     .tab:focus-visible{outline-offset:-3px}
     .mode-title{font-size:22px;letter-spacing:-.65px;margin:0}
@@ -70,26 +70,12 @@
     .empty{background:#f8faf9;border:1px dashed #cad8d4;border-radius:16px;text-align:center;padding:32px 20px;margin-top:21px}
     .empty h3{margin:5px 0;font-size:18px}
     .empty p{color:var(--sub);margin:4px auto 19px;max-width:380px;font-size:13px}
-    .side-title{font-size:17px;letter-spacing:-.4px;font-weight:800;margin:0 0 4px}
-    .side-desc{font-size:12px;color:var(--sub);margin:0 0 16px}
-    .article-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 0;font-size:13px}
-    .article-row:last-child{border:0}
-    .article-row strong{font-size:15px}
-    .article-pill{border-radius:8px;padding:3px 9px;font-weight:850;margin-right:8px}
-    .der{background:#e5eeff;color:#335fa2}.die{background:#ffe7e8;color:#ae4a58}.das{background:#def6ef;color:#1d8269}
-    .note{margin-top:15px;background:#f2f6f6;color:#61757c;padding:12px;border-radius:10px;font-size:12px}
-    .library{margin-top:20px}
-    .library-toolbar{display:flex;gap:9px;align-items:center;justify-content:space-between}
-    .search{width:100%;min-width:0;border:1px solid #dfe6e9;border-radius:10px;padding:11px 12px}
-    .word-list{max-height:280px;overflow:auto;margin-top:12px}
-    .word-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #edf1f2;font-size:13px}
-    .word-line:last-child{border:0}
-    .word-line small{color:#8b98a5}
     .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:28px;color:#758496;font-size:12px}
     .link-button{background:none;border:0;text-decoration:underline;color:#647585;padding:4px}
     [hidden]{display:none!important}
-    @media(max-width:780px){.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.main{grid-template-columns:1fr}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
-    @media(max-width:440px){.chip{display:none}.tab{font-size:12px;padding:12px 5px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}}
+    @media(max-width:780px){.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
+    @media(max-width:440px){.chip{display:none}.tab{font-size:11.5px;padding:12px 4px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
+    @media(max-width:360px){.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.tab{font-size:11px;padding:11px 2px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
   </style>
 </head>
@@ -131,20 +117,7 @@
           <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another round</button></div>
         </div>
       </section>
-      <aside>
-        <section class="panel"><div class="panel-pad">
-          <h2 class="side-title">Your article cheat sheet</h2><p class="side-desc">Learn the noun with its article, as one unit.</p>
-          <div class="article-row"><span><span class="article-pill der">der</span> Masculine</span><strong>der Park</strong></div>
-          <div class="article-row"><span><span class="article-pill die">die</span> Feminine</span><strong>die Schule</strong></div>
-          <div class="article-row"><span><span class="article-pill das">das</span> Neuter</span><strong>das Buch</strong></div>
-          <div class="note">Tip: Say the complete phrase in your mind — “der Schlüssel”, never just “Schlüssel”. <strong>die Eltern</strong> is plural, not feminine.</div>
-        </div></section>
-        <section class="panel library"><div class="panel-pad">
-          <h2 class="side-title">Your 100-word library</h2><p class="side-desc">The exact words from your original German PDF.</p>
-          <div class="library-toolbar"><input id="search" class="search" type="search" placeholder="Find a word or translation…" aria-label="Search words"></div>
-          <div id="word-list" class="word-list" aria-live="polite"></div>
-        </div></section>
-      </aside>
+
     </main>
     <footer class="footer"><span>Progress stays in this browser. No account, audio, or payment required.</span><button class="link-button" id="reset">Reset all learning progress</button></footer>
   </div>
@@ -274,22 +247,9 @@
     $("reveal").addEventListener("click",()=>submit("",true));
     $("next").addEventListener("click",()=>{index++;render();});
     $("restart").addEventListener("click",()=>start(mode==="review"&&queue.length===0?"challenge":mode));
-    $("reset").addEventListener("click",()=>{if(!confirm("Reset your saved accuracy, mistakes and mastery on this browser?"))return;progress={};save();start("challenge");renderLibrary($("search").value);});
-    function renderLibrary(term){
-      const q=term.trim().toLocaleLowerCase("de-DE");
-      const found=words.filter(w=>(w.noun+" "+w.article+" "+w.english).toLocaleLowerCase("de-DE").includes(q));
-      const root=$("word-list");root.replaceChildren();
-      if(!found.length){const p=document.createElement("p");p.className="subtle";p.textContent="No matching words.";root.appendChild(p);return;}
-      for(const w of found){
-        const line=document.createElement("div");line.className="word-line";
-        const left=document.createElement("span"),badge=document.createElement("span"),label=document.createElement("span"),en=document.createElement("small");
-        badge.className="article-pill "+w.article;badge.textContent=w.article;
-        label.textContent=w.noun;left.append(badge,label);en.textContent=w.english;line.append(left,en);root.appendChild(line);
-      }
-    }
-    $("search").addEventListener("input",e=>renderLibrary(e.target.value));
+    $("reset").addEventListener("click",()=>{if(!confirm("Reset your saved accuracy, mistakes and mastery on this browser?"))return;progress={};save();start("challenge");});
     if(words.length!==100||new Set(words.map(w=>w.noun)).size!==100)console.error("Vocabulary data is not exactly 100 unique nouns.");
-    renderLibrary("");updateStats();start("challenge");
+    updateStats();start("challenge");
   </script>
 </body>
 </html>
