@@ -1,32 +1,35 @@
 # Artikel Studio — German Article Trainer
 
-A free, mobile-friendly German A1 noun article trainer, hosted using a single static HTML file. No microphones, accounts, frameworks, build tools, API keys, or paid services.
+A free, mobile-friendly, silent German noun-article trainer, hosted with GitHub Pages. It includes the original 100 nouns from the learner's vocabulary PDF.
 
-## How learning works
-- **One adaptive session with 30 questions.** Multiple-choice (tap der / die / das) and typing questions are interleaved.
-- **Mastery per noun:** 5 correct answers in total, including exactly **3 multiple-choice** and **2 typed** correct answers.
-- **First stage:** 2 successful multiple-choice answers and 1 successful typed answer, in a mixed order. Successful recalls for the same noun are spaced by at least 20 minutes.
-- **Delay:** after the third correct answer, that noun cannot reappear for **48 hours**. The maximum is 3 successful recalls per rolling 48-hour window.
-- **Final stage:** 1 additional multiple-choice answer and 1 additional typed answer. The final two successes are at least 6 hours apart. After these five total correct answers, the noun is **mastered and removed** from future practice.
-- **Mistake Hunter is built in:** incorrect answers and reveals do not earn mastery credit. Missed nouns get priority and can reappear later in the same session after several other questions.
-- **Adaptive selection:** chooses between new and weak nouns, without reviewing mastered nouns.
-- **Correct answers:** advance automatically after **0.6 seconds**. Incorrect answers or revealed answers remain visible for **3 seconds**, then advance.
-- **30 questions per session when enough words are due.** If all remaining nouns are waiting for their next spaced review, the session ends early instead of bypassing the timing rules.
+## Daily study
 
-Contains the learner's original **100 German nouns and definite articles** from the "100 deutsche Wörter" PDF, with English meanings embedded in the quiz.
+- **Study for up to 60 minutes per calendar day.** The on-screen timer tracks active time while the quiz is visible; it pauses when the page is hidden, when you press Pause, after two minutes of inactivity, or between rounds. Unused minutes remain available later that day.
+- **30 questions per round**, mixing multiple-choice and typed article recall. Start another round while daily minutes remain.
+- **Pause / Resume** at any point. Individual answers, the current round, errors, and accumulated minutes are saved in browser localStorage. Closing and reopening the browser on the same day resumes the round.
+- At the daily one-hour cap, the app stops until the next calendar day. Progress remains intact. A new daily budget starts at local midnight.
+- **Mistake Hunter is automatic.** Missed nouns are prioritized and may recur later in the round.
+- **Never locked out of practice due to spaced recall.** If every word is waiting for another mastery credit, unmastered words still appear for extra practice. Extra answers affect accuracy and mistake statistics but do not earn premature mastery credit.
 
-## Run or publish
-Open index.html in a browser or use GitHub Pages:
-1. Repository **Settings → Pages**.
-2. **Build and deployment → Deploy from a branch**.
-3. Choose **main / (root)** and **Save**.
-4. Site URL: https://yasir88y.github.io/learne-germann-articlez-chtgpt/
+## Mastery and spacing
 
-## Progress and device notes
-Progress is saved on each device in the browser's localStorage (artikel-studio-v2). It does not synchronize across different devices or browsers.
-Prior artikel-studio-v1 attempts and errors are imported when the new storage does not yet exist. Old correct answers do **not** count toward mastery because they were not categorized as multiple-choice vs typed.
+- Each noun needs **3 correct multiple-choice answers and 2 correct typed answers** to become mastered.
+- Successful mastery recalls for the same word are separated by at least **five minutes**.
+- No more than **three mastery credits per noun per calendar day**.
+- After the third correct mastery recall, the final two can start **the following day**, not after a compulsory two-day wait.
+- Once a noun is mastered, it is removed from future questions.
+- Correct answers advance after **0.6 seconds**; incorrect and revealed answers display the article for **3 seconds**. Incorrect and revealed answers never earn mastery credit.
 
-To reset all learning progress, use the reset option in the footer.
+## Publishing
 
-## Maintenance
-The app is intentionally a single index.html file, so future GitHub edits and GitHub Pages deployments are simple.
+1. Open repository **Settings → Pages**.
+2. Configure **Deploy from a branch → main / (root)**.
+3. Live site: https://yasir88y.github.io/learne-germann-articlez-chtgpt/
+
+## Data and privacy
+
+Local progress is kept in the same browser/device. The app does **not** sync between devices. Clearing the browser's site data or using the Reset button can remove stored learning progress.
+
+Older learning progress from the previous application version is preserved. The daily timer and resumable round use separate localStorage keys and do not erase prior word statistics.
+
+The app is a single HTML/CSS/vanilla JavaScript file; it has no server, microphone requirement, paid dependency, or build step.
