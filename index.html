@@ -27,10 +27,11 @@
     .hero p{color:#c8d1d9;margin:0;max-width:580px}
     .eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#97d9c0}
     .hero-mark{font-size:55px;font-weight:800;letter-spacing:-5px;opacity:.23;padding-right:16px;white-space:nowrap}
-    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 25px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 12px}
     .stat{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px 18px;box-shadow:var(--shadow)}
     .stat .num{font-size:27px;font-weight:800;letter-spacing:-.8px}
     .stat .lab{font-size:12px;color:var(--sub)}
+    .progress-explainer{font-size:12px;color:var(--sub);margin:0 0 23px;padding:0 2px}
     .main{display:block;min-width:0}
     .panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
     .panel-pad{padding:24px}
@@ -75,7 +76,7 @@
     .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:28px;color:#758496;font-size:12px}
     .link-button{background:none;border:0;text-decoration:underline;color:#647585;padding:4px}
     [hidden]{display:none!important}
-    @media(max-width:780px){.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
+    @media(max-width:780px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
     @media(max-width:440px){.chip{display:none}.session-heading{padding:13px 18px;gap:8px}.session-heading .small-count{font-size:11px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
     @media(max-width:360px){.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
@@ -92,10 +93,12 @@
       <div class="hero-mark" aria-hidden="true">der<br>die<br>das.</div>
     </section>
     <section class="stats" aria-label="Your progress">
-      <div class="stat"><div class="num" id="stat-mastered">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Words mastered</div></div>
+      <div class="stat"><div class="num" id="stat-review">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Nouns practised</div></div>
+      <div class="stat"><div class="num" id="stat-steps">0<span style="color:#93a1af;font-size:15px">/500</span></div><div class="lab">Mastery steps earned</div></div>
       <div class="stat"><div class="num" id="stat-accuracy">—</div><div class="lab">Overall accuracy</div></div>
-      <div class="stat"><div class="num" id="stat-review">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Words introduced</div></div>
+      <div class="stat"><div class="num" id="stat-mastered">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Fully mastered</div></div>
     </section>
+    <p class="progress-explainer" id="progress-explainer" aria-live="polite">Your earlier answers and credited learning steps are counted separately.</p>
     <main class="main">
       <section class="panel" aria-label="Study session">
         <div class="session-heading"><span class="mode-tag">DAILY PRACTICE</span><span class="small-count">30 questions per round</span></div><div class="daily-bar"><div><strong id="daily-clock">00:00 / 60:00</strong><div id="daily-status">Active study time today</div></div><button class="btn alt" id="pause-button" type="button">Pause</button></div>
@@ -359,9 +362,13 @@
       const entries=words.map(w=>record(w.id));
       const tried=entries.reduce((t,p)=>t+p.seen,0);
       const right=entries.reduce((t,p)=>t+p.correct,0);
+      const milestones=entries.reduce((n,p)=>n+Math.min(3,p.successes.filter(x=>x.mode==="choice").length)+Math.min(2,p.successes.filter(x=>x.mode==="type").length),0);
+      const wrong=entries.reduce((n,p)=>n+p.wrong,0);
       $("stat-mastered").innerHTML=words.filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("stat-steps").innerHTML=milestones+'<span style="color:#93a1af;font-size:15px">/500</span>';
       $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
       $("stat-review").innerHTML=words.filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("progress-explainer").textContent=tried?right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). Mastery steps count only qualifying spaced recalls; full mastery takes 3 MCQs + 2 typed answers per noun.":"Your answers and spaced mastery steps are saved automatically in this browser.";
     }
     function startSession() {
       tick();
