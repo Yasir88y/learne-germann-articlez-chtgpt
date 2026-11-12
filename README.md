@@ -36,3 +36,14 @@ Local progress is kept in the same browser/device. The app does **not** sync bet
 Older learning progress from the previous application version is preserved. The daily timer and resumable round use separate localStorage keys and do not erase prior word statistics.
 
 The app is a single HTML/CSS/vanilla JavaScript file; it has no server, microphone requirement, paid dependency, or build step.
+
+## Data recovery and backups
+
+Visit [recovery.html](./recovery.html) on the **same browser profile and GitHub Pages domain** where you studied. The page scans the original localStorage keys (`artikel-studio-v1`, `artikel-studio-v2`, daily time, rounds, and newer safety copies) without modifying records during the scan.
+
+- **Download backup JSON** before making any changes. Backups stay on the device; they are not uploaded to GitHub.
+- If historical v1 records remain, use **Restore earlier vocabulary records** to merge seen/correct/wrong counts into v2 without deleting existing v2 successes.
+- If an automatic safety copy is fuller than the current record, use **Restore automatic safety copy**. A local pre-restore snapshot is retained before replacing the v2 record.
+- After this update, writing new word progress preserves the fullest preceding record in `artikel-studio-safety-copy-v1`, and resetting requires typing DELETE.
+
+Existing erased localStorage cannot be reconstructed from repository history; GitHub hosts the program but not individual browser learning data. Different browser profiles and website origins have separate localStorage.
