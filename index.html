@@ -212,7 +212,8 @@
       if(daily.day!==dayKey(now)){
         daily={day:dayKey(now),ms:0,paused:false};
         completedCount=0;roundCorrect=0;answered=false;current=null;
-        seenThisSession=new Set();retryAt=new Map();cancelAdvance();saveRound();
+        seenThisSession=new Set();retryAt=new Map();cancelAdvance();
+        lastTick=now;lastActivity=now;saveDaily();saveRound();render();return;
       }
       if(!daily.paused&&!document.hidden&&current&&completedCount<SESSION_LIMIT&&daily.ms<DAILY_MAX){
         daily.ms=Math.min(DAILY_MAX,daily.ms+Math.max(0,Math.min(now,lastActivity+IDLE_MS)-lastTick));
@@ -384,7 +385,7 @@
         retryAt.set(w.id,completedCount+4);
       }
       progress[w.id]=p;saved();
-      completedCount++;current=null;saveRound();
+      completedCount++;current=null;saveRound();current=null;saveRound();
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
