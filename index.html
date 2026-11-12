@@ -37,6 +37,8 @@
     .session-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;background:#fbfcfd;border-bottom:1px solid var(--line)}
     .mode-tag{color:#175a51;background:#e8f4ef;font-size:10px;font-weight:850;letter-spacing:1.2px;border-radius:8px;padding:7px 10px;white-space:nowrap}
     .word-progress{font-size:12px;color:#7a888d;margin-top:8px}
+    .daily-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;gap:10px;border-bottom:1px solid var(--line)}
+    .daily-bar strong{font-size:19px;font-variant-numeric:tabular-nums}.daily-bar #daily-status{font-size:11px;color:var(--sub)}.daily-bar button{padding:9px 17px}
     .rules-note{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:#74808a}
     .mode-title{font-size:22px;letter-spacing:-.65px;margin:0}
     .mode-desc{color:var(--sub);font-size:13px;margin:6px 0 0}
@@ -96,7 +98,7 @@
     </section>
     <main class="main">
       <section class="panel" aria-label="Study session">
-        <div class="session-heading"><span class="mode-tag">ONE ADAPTIVE SESSION</span><span class="small-count">30 questions · mixed formats</span></div>
+        <div class="session-heading"><span class="mode-tag">DAILY PRACTICE</span><span class="small-count">30 questions per round</span></div><div class="daily-bar"><div><strong id="daily-clock">00:00 / 60:00</strong><div id="daily-status">Active study time today</div></div><button class="btn alt" id="pause-button" type="button">Pause</button></div>
         <div class="panel-pad">
           <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Smart Article Practice</h2><p class="mode-desc" id="mode-desc">Choose or type the article. Missed words return sooner.</p></div><span class="small-count" id="question-count">1 / 30</span></div>
           <div class="progress-track" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
@@ -159,9 +161,6 @@
     const CREDIT_GAP=5*60*1000;
     const dayKey=(stamp=Date.now())=>{const d=new Date(stamp);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
     const TARGET_COUNTS = {choice:3,type:2};
-    const SHORT_GAP = 20 * 60 * 1000;      // Different review interval (20 minutes).
-    const TWO_DAYS = 48 * 60 * 60 * 1000; // Pause after third correct recall.
-    const FINAL_GAP = 6 * 60 * 60 * 1000; // Space the two delayed answers.
     const $ = id => document.getElementById(id);
 
     let progress = {};
@@ -184,6 +183,44 @@
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (_) {}
       }
     } catch (_) { progress = {}; }
+
+
+    const DAILY_KEY="artikel-studio-daily-v1", ROUND_KEY="artikel-studio-round-v1";
+    const DAILY_MAX=60*60*1000, IDLE_MS=2*60*1000;
+    function stored(key){try{return JSON.parse(localStorage.getItem(key)||"null");}catch(_){return null;}}
+    let daily=stored(DAILY_KEY)||{day:dayKey(),ms:0,paused:false};
+    if(daily.day!==dayKey())daily={day:dayKey(),ms:0,paused:false};
+    daily.ms=Math.max(0,Math.min(DAILY_MAX,Number(daily.ms)||0));
+    let lastTick=Date.now(),lastActivity=Date.now();
+    function saveDaily(){try{localStorage.setItem(DAILY_KEY,JSON.stringify(daily));}catch(_){}}
+    function saveRound(){
+      try{localStorage.setItem(ROUND_KEY,JSON.stringify({
+        day:dayKey(),completedCount,roundCorrect,seenIds:[...seenThisSession],
+        retries:[...retryAt],currentId:current?current.id:null,currentMode
+      }));}catch(_){}
+    }
+    function showClock(){
+      const min=Math.floor(daily.ms/60000),sec=Math.floor(daily.ms%60000/1000);
+      $("daily-clock").textContent=String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0")+" / 60:00";
+      $("daily-status").textContent=daily.ms>=DAILY_MAX?"Today's hour completed":
+        daily.paused?"Paused · your progress is saved":Math.ceil((DAILY_MAX-daily.ms)/60000)+" min left today";
+      $("pause-button").textContent=daily.paused?"Resume":"Pause";
+      $("pause-button").disabled=daily.ms>=DAILY_MAX;
+    }
+    function tick(){
+      const now=Date.now();
+      if(daily.day!==dayKey(now)){
+        daily={day:dayKey(now),ms:0,paused:false};
+        completedCount=0;roundCorrect=0;answered=false;current=null;
+        seenThisSession=new Set();retryAt=new Map();cancelAdvance();saveRound();
+      }
+      if(!daily.paused&&!document.hidden&&current&&completedCount<SESSION_LIMIT&&daily.ms<DAILY_MAX){
+        daily.ms=Math.min(DAILY_MAX,daily.ms+Math.max(0,Math.min(now,lastActivity+IDLE_MS)-lastTick));
+      }
+      lastTick=now;saveDaily();showClock();
+      if(daily.ms>=DAILY_MAX&&current&&!answered)render();
+    }
+    function markActivity(){lastActivity=Date.now();}
 
     let completedCount = 0;
     let roundCorrect = 0;
@@ -275,26 +312,19 @@
       $("stat-review").textContent=words.filter(isWeak).length;
     }
     function startSession() {
+      tick();
+      if(daily.ms>=DAILY_MAX){render();return;}
       cancelAdvance();
       completedCount=0;roundCorrect=0;answered=false;current=null;
       seenThisSession=new Set();retryAt=new Map();
-      render();
+      saveRound();render();
     }
-    function describeWait() {
-      const outstanding=words.filter(w=>!isMastered(w));
-      if (!outstanding.length) return "All 100 nouns are mastered. You have completed the course!";
-      const earliest=Math.min(...outstanding.map(dueAt));
-      const wait=Math.max(0,earliest-Date.now());
-      if (wait<=0) return "There are more words ready now. Start a new session to continue.";
-      if (wait<60*60*1000) return "Your next spaced review unlocks in about "+Math.ceil(wait/(60*1000))+" minutes.";
-      if (wait<24*60*60*1000) return "Your next spaced review unlocks in about "+Math.ceil(wait/(60*60*1000))+" hours.";
-      return "Your next spaced review unlocks in about "+Math.ceil(wait/(24*60*60*1000))+" days.";
-    }
+    function describeWait(){return "All answers are saved. Keep practising within your remaining daily time.";}
     function render() {
       cancelAdvance();
       if (completedCount >= SESSION_LIMIT) current=null;
-      if (!current && completedCount < SESSION_LIMIT) current=chooseWord();
-      const finished=completedCount>=SESSION_LIMIT || !current;
+      if(!current&&completedCount<SESSION_LIMIT&&!daily.paused&&daily.ms<DAILY_MAX)current=chooseWord();
+      const finished=completedCount>=SESSION_LIMIT||daily.paused||daily.ms>=DAILY_MAX||!current;
       $("exercise").hidden=finished;
       $("empty").hidden=!finished;
       $("question-count").textContent=finished?completedCount+" / "+SESSION_LIMIT:(completedCount+1)+" / "+SESSION_LIMIT;
@@ -302,13 +332,13 @@
       $("progress-track").setAttribute("aria-valuemax",String(SESSION_LIMIT));
       $("progress-track").setAttribute("aria-valuenow",String(completedCount));
       if (finished) {
-        $("empty-title").textContent=completedCount>=SESSION_LIMIT?"Session complete!":words.every(isMastered)?"All 100 words mastered!":"All caught up for now";
-        $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+describeWait();
+        $("empty-title").textContent=daily.ms>=DAILY_MAX?"Your daily hour is complete!":daily.paused?"Practice paused":completedCount>=SESSION_LIMIT?"Round complete!":"All 100 words mastered!";
+        $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+(daily.ms>=DAILY_MAX?"All progress is saved; return tomorrow.":daily.paused?"Your remaining study time and progress are saved.":describeWait());
         const allMastered=words.every(isMastered);
         const hasDue=words.some(w=>!isMastered(w));
-        $("restart").textContent=allMastered?"All words mastered":hasDue?"Start another session":"Check for due words";
-        $("restart").disabled=allMastered;
-        updateStats();return;
+        $("restart").textContent=allMastered?"All mastered":daily.ms>=DAILY_MAX?"Come back tomorrow":daily.paused?"Resume practice":"Start another round";
+        $("restart").disabled=allMastered||daily.ms>=DAILY_MAX;
+        saveRound();showClock();updateStats();return;
       }
       answered=false;
       currentMode=chooseMode(current);
@@ -328,12 +358,14 @@
       });
       $("type-input").disabled=false;$("type-input").value="";
       // Avoid popping up the phone keyboard before the user taps the input.
+      saveRound();showClock();
     }
     function explain(w) {
       return w.noun==="Eltern"?"“die Eltern” is plural, so its article is always die.":"Remember the whole phrase: "+w.article+" "+w.noun+".";
     }
     function submit(value,showOnly=false) {
-      if (answered||!current)return;
+      tick();
+      if(answered||!current||daily.paused||daily.ms>=DAILY_MAX)return;
       const w=current;
       const guess=value.trim().toLowerCase();
       const correct=!showOnly&&guess===w.article;
@@ -352,7 +384,7 @@
         retryAt.set(w.id,completedCount+4);
       }
       progress[w.id]=p;saved();
-      completedCount++;
+      completedCount++;current=null;saveRound();
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
@@ -366,7 +398,7 @@
       });
       $("type-input").disabled=true;
       $("advance-note").textContent=correct?"Next word in 0.6s…":"Review for 3 seconds…";
-      updateStats();
+      updateStats();showClock();
       advanceTimer=setTimeout(()=>{
         advanceTimer=null;
         current=null;
@@ -380,14 +412,28 @@
       if (value) submit(value);
     });
     $("reveal").addEventListener("click",()=>submit("",true));
-    $("restart").addEventListener("click",startSession);
+    $("restart").addEventListener("click",()=>{markActivity();if(daily.paused){daily.paused=false;saveDaily();render();}else startSession();});
+    $("pause-button").addEventListener("click",()=>{tick();markActivity();if(daily.ms>=DAILY_MAX)return;daily.paused=!daily.paused;cancelAdvance();saveDaily();render();});
     $("reset").addEventListener("click",()=>{
       if (!confirm("Reset your saved accuracy, mistakes and mastery on this browser?")) return;
-      progress={};saved();updateStats();startSession();
+      progress={};daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
     });
     if (words.length!==100 || new Set(words.map(w=>w.noun)).size!==100) console.error("Expected exactly 100 unique nouns.");
-    updateStats();
-    startSession();
+    document.addEventListener("visibilitychange",()=>{tick();markActivity();});
+    document.addEventListener("pointerdown",markActivity,{passive:true});
+    document.addEventListener("keydown",markActivity,{passive:true});
+    window.addEventListener("pagehide",()=>{tick();saveRound();});
+    setInterval(tick,1000);
+    const last=stored(ROUND_KEY);
+    if(last&&last.day===dayKey()){
+      completedCount=Math.max(0,Math.min(SESSION_LIMIT,Number(last.completedCount)||0));
+      roundCorrect=Math.max(0,Number(last.roundCorrect)||0);
+      seenThisSession=new Set(Array.isArray(last.seenIds)?last.seenIds:[]);
+      retryAt=new Map(Array.isArray(last.retries)?last.retries:[]);
+      const id=Number(last.currentId);
+      if(last.currentId!==null&&Number.isInteger(id)&&words[id]&&!isMastered(words[id]))current=words[id];
+    }
+    updateStats();render();
   </script>
 </body>
 </html>
