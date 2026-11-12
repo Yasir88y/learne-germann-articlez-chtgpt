@@ -46,7 +46,7 @@ kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
   <h2>Records found</h2>
   <div class="rows">
     <div class="r"><span>Current learning history (v2)</span><strong id="v2">Checking…</strong></div>
-    <div class="r"><span>Earlier learning history (v1)</span><strong id="v1">Checking…</strong></div>
+    <div class="r"><span>Earlier learning history (v1)</span><strong id="v1">Checking…</strong></div><div class="r"><span>Automatic safety copy</span><strong id="safety">Checking…</strong></div>
     <div class="r"><span>Total answers in current history</span><strong id="answered">—</strong></div>
     <div class="r"><span>Correct / incorrect in current history</span><strong id="accuracy">—</strong></div>
     <div class="r"><span>Stored daily study time</span><strong id="timer">—</strong></div>
@@ -54,7 +54,7 @@ kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
     <div class="r"><span>Recent-word history</span><strong id="recent">—</strong></div>
   </div>
   <p id="diagnostic" class="smallbox" aria-live="polite"></p>
-  <button id="restore-legacy" class="secondary" type="button" hidden>Safely restore older vocabulary records</button>
+  <div class="actions"><button id="restore-legacy" class="secondary" type="button" hidden>Restore earlier vocabulary records</button><button id="restore-safety" class="secondary" type="button" hidden>Restore automatic safety copy</button></div>
  </section>
  <section class="card">
    <h2>Restore from a backup file</h2>
@@ -75,7 +75,7 @@ kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
 </main>
 <script>
 "use strict";
-const KEYS=["artikel-studio-v2","artikel-studio-v1","artikel-studio-daily-v1","artikel-studio-round-v1","artikel-studio-recent-v1"];
+const KEYS=["artikel-studio-v2","artikel-studio-v1","artikel-studio-daily-v1","artikel-studio-round-v1","artikel-studio-recent-v1","artikel-studio-safety-copy-v1"];
 const $=id=>document.getElementById(id);
 const parse=raw=>{try{return JSON.parse(raw)}catch(_){return null}};
 const entries=obj=>obj && typeof obj==="object"&&!Array.isArray(obj)?Object.entries(obj).filter(([k,v])=>/^(?:[0-9]|[1-9][0-9])$/.test(k)&&v&&typeof v==="object"):[];
@@ -103,26 +103,41 @@ function downloadBackup(){
 }
 function scan(){
  const v2=parse(localStorage.getItem(KEYS[0])),v1=parse(localStorage.getItem(KEYS[1]));
- const current=entries(v2),older=entries(v1);
+ const safety=parse(localStorage.getItem("artikel-studio-safety-copy-v1"));
+ const current=entries(v2),older=entries(v1),safetyRows=entries(safety);
  const today=parse(localStorage.getItem(KEYS[2]));
  const round=parse(localStorage.getItem(KEYS[3]));
  const recent=parse(localStorage.getItem(KEYS[4]));
  $("v2").textContent=current.length+" of 100 nouns";
  $("v1").textContent=older.length+" of 100 nouns";
+ $("safety").textContent=safetyRows.length+" of 100 nouns";
  $("answered").textContent=String(total(current,"seen"));
  $("accuracy").textContent=total(current,"correct")+" correct / "+total(current,"wrong")+" incorrect";
  $("timer").textContent=today&&typeof today.ms==="number"?(Math.floor(today.ms/60000)+" minutes"):"Not found";
  $("round").textContent=round&&Number.isFinite(Number(round.completedCount))?round.completedCount+" / 30":"Not found";
  $("recent").textContent=Array.isArray(recent)?recent.length+" recent nouns":"Not found";
  $("restore-legacy").hidden=older.length===0;
- if(current.length){
+ $("restore-safety").hidden=safetyRows.length===0 || total(current,"seen")>=total(safetyRows,"seen");
+ if(safetyRows.length && total(safetyRows,"seen")>total(current,"seen")){
+  $("diagnostic").textContent="A saved safety copy has more past answers than the current record. Download a backup first, then use Restore automatic safety copy.";
+ }else if(current.length){
   $("diagnostic").textContent="Learning history exists in this browser. If the trainer shows zero, avoid resetting it. Export a backup, then return to the trainer and reload.";
  }else if(older.length){
   $("diagnostic").textContent="An older history record exists here. You can download a backup, then restore the older vocabulary statistics without throwing away any current v2 mastery entries.";
  }else{
   $("diagnostic").textContent="This browser has no readable v1/v2 vocabulary records. The earlier history may be in a different browser, device, or website origin, or it may have been cleared. GitHub cannot retrieve browser-only storage.";
  }
- return {v2,v1,current,older};
+ return {v2,v1,safety,current,older,safetyRows};
+}
+function restoreSafety(){
+ const state=scan();
+ if(!state.safetyRows.length || total(state.safetyRows,"seen")<=total(state.current,"seen"))return;
+ if(!confirm("Restore the fuller safety copy? Current data will be backed up locally first. This will replace current learning history; daily study time is untouched."))return;
+ try{
+  const safetyKey=saveCurrentBeforeWrite();
+  localStorage.setItem("artikel-studio-v2",JSON.stringify(state.safety));
+  scan();$("scan-status").textContent="Safety copy restored. Original current record kept as "+safetyKey+". Reload the trainer.";
+ }catch(e){$("scan-status").textContent="Could not restore safety copy: "+e.message;}
 }
 function restoreLegacy(){
  const state=scan();
@@ -176,6 +191,7 @@ $("import").addEventListener("click",()=>{
 $("download").addEventListener("click",()=>{try{downloadBackup()}catch(e){$("scan-status").textContent="Backup failed: "+e.message}});
 $("scan").addEventListener("click",scan);
 $("restore-legacy").addEventListener("click",restoreLegacy);
+$("restore-safety").addEventListener("click",restoreSafety);
 $("origin").textContent=location.origin;
 scan();
 </script>
