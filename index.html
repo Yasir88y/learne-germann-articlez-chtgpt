@@ -117,7 +117,7 @@
       </section>
 
     </main>
-    <footer class="footer"><span>Progress stays in this browser. No account, audio, or payment required.</span><button class="link-button" id="reset">Reset all learning progress</button></footer>
+    <footer class="footer"><span>Progress stays in this browser. No account, audio, or payment required.</span><a class="link-button" href="./recovery.html">Backup / recover progress</a><button class="link-button" id="reset">Reset learning progress</button></footer>
   </div>
   <script>
     "use strict";
@@ -262,7 +262,24 @@
       return c.choice >= TARGET_COUNTS.choice && c.type >= TARGET_COUNTS.type;
     }
     function isWeak(w) { return record(w.id).wrong > 0 && !isMastered(w); }
-    function saved() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (_) {} }
+    const SAFETY_KEY = "artikel-studio-safety-copy-v1";
+    function totalAttempts(data){
+      if(!data||typeof data!=="object"||Array.isArray(data))return 0;
+      return Object.values(data).reduce((n,p)=>n+(p&&typeof p==="object"?(Number(p.seen)||0):0),0);
+    }
+    function saved() {
+      try {
+        // Keep the fullest previous history before an overwrite, including resets.
+        // Never overwrite a better safety copy with a brand-new or empty record.
+        let previous=null,safety=null;
+        try{previous=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");}catch(_){}
+        try{safety=JSON.parse(localStorage.getItem(SAFETY_KEY)||"null");}catch(_){}
+        if(totalAttempts(previous)>0&&totalAttempts(previous)>totalAttempts(safety)){
+          localStorage.setItem(SAFETY_KEY,JSON.stringify(previous));
+        }
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));
+      }catch(_){}
+    }
     function shuffle(array) {
       const a = array.slice();
       for (let i=a.length-1;i>0;i--) {
@@ -453,7 +470,8 @@
     $("restart").addEventListener("click",()=>{markActivity();if(daily.paused){daily.paused=false;saveDaily();render();}else startSession();});
     $("pause-button").addEventListener("click",()=>{tick();markActivity();if(daily.ms>=DAILY_MAX)return;daily.paused=!daily.paused;cancelAdvance();saveDaily();render();});
     $("reset").addEventListener("click",()=>{
-      if (!confirm("Reset your saved accuracy, mistakes and mastery on this browser?")) return;
+      if (!confirm("This will erase learning progress from this browser. A safety copy will be kept. Do you want to continue?")) return;
+      if (prompt("Type DELETE to confirm the reset.")!=="DELETE") return;
       progress={};recentWords=[];saveRecent();daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
     });
     if (words.length!==100 || new Set(words.map(w=>w.noun)).size!==100) console.error("Expected exactly 100 unique nouns.");
