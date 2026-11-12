@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#16253b">
+<title>Artikel Studio — Recover Your Learning Progress</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#18283f;background:#f5f7f8}
+*{box-sizing:border-box}body{margin:0}main{max-width:780px;margin:0 auto;padding:22px 16px 65px}
+h1{font-size:clamp(25px,5vw,34px);line-height:1.15;letter-spacing:-.7px;margin:6px 0 12px}h2{font-size:18px;margin:0 0 12px}
+p{line-height:1.6}.muted{color:#627386}.tiny{font-size:12px;color:#647488}
+a{color:#145f54}.top{display:flex;align-items:center;gap:14px;justify-content:space-between;margin-bottom:20px}
+.brand{font-weight:800;font-size:18px}.back{text-decoration:none;font-size:13px;font-weight:700}
+.hero{background:#16253b;border-radius:22px;padding:26px 28px;color:#fff;margin-bottom:18px}
+.hero p{color:#ccd5dc;margin-bottom:0}.eyebrow{font-size:11px;color:#9cdac4;letter-spacing:2px;font-weight:850}
+.card{background:#fff;border:1px solid #e2e8ed;border-radius:20px;padding:23px;margin-bottom:16px;box-shadow:0 12px 35px #18283f08}
+.notice{background:#eaf6ef;border:1px solid #c6e4d5;padding:13px 15px;border-radius:11px;font-size:13px}
+.warning{background:#fff7eb;border-color:#f1d4a8}
+.rows{margin:10px 0 0}.r{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid #edf0f2;padding:12px 0;font-size:14px}
+.r:last-child{border-bottom:0}.r strong{font-variant-numeric:tabular-nums;text-align:right}
+button,.file-label{cursor:pointer;font:inherit;font-weight:750;border:0;border-radius:11px;padding:12px 16px;background:#1b6f62;color:#fff;display:inline-block;text-align:center;line-height:1.35}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary,.file-label{color:#1f4d47;background:#e7f0ed}
+button.danger{background:#bd4b4b}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 5px}
+input[type=file]{width:100%;margin:10px 0}
+kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
+.status{min-height:18px;font-size:13px;margin-top:13px}
+.smallbox{background:#f6f8f9;padding:13px;border-radius:10px;font-size:13px}
+.steps{padding-left:22px;line-height:1.7}
+@media(max-width:480px){.hero{padding:22px}.card{padding:19px}.r{font-size:13px}button,.file-label{width:100%}.actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><div class="brand">A. Artikel Studio</div><a class="back" href="./">Return to trainer</a></div>
+ <section class="hero"><div class="eyebrow">LOCAL PROGRESS RECOVERY</div><h1>Find your saved learning history</h1><p>This page checks data stored on <strong>this browser and website</strong>. It never uploads your records and never changes them without your permission.</p></section>
+ <section class="card">
+  <div class="notice warning"><strong>Important:</strong> Do not clear your browser's site data, press Reset in the trainer, or use Private/Incognito mode while investigating. Your learning data may still be saved in another browser or device.</div>
+  <div class="actions"><button id="scan" class="secondary" type="button">Scan this browser</button><button id="download" type="button">Download backup JSON</button></div>
+  <p class="tiny">Site checked: <strong id="origin"></strong></p>
+  <div id="scan-status" class="status" role="status" aria-live="polite"></div>
+ </section>
+ <section class="card">
+  <h2>Records found</h2>
+  <div class="rows">
+    <div class="r"><span>Current learning history (v2)</span><strong id="v2">Checking…</strong></div>
+    <div class="r"><span>Earlier learning history (v1)</span><strong id="v1">Checking…</strong></div>
+    <div class="r"><span>Total answers in current history</span><strong id="answered">—</strong></div>
+    <div class="r"><span>Correct / incorrect in current history</span><strong id="accuracy">—</strong></div>
+    <div class="r"><span>Stored daily study time</span><strong id="timer">—</strong></div>
+    <div class="r"><span>Saved round questions</span><strong id="round">—</strong></div>
+    <div class="r"><span>Recent-word history</span><strong id="recent">—</strong></div>
+  </div>
+  <p id="diagnostic" class="smallbox" aria-live="polite"></p>
+  <button id="restore-legacy" class="secondary" type="button" hidden>Safely restore older vocabulary records</button>
+ </section>
+ <section class="card">
+   <h2>Restore from a backup file</h2>
+   <p class="muted">If you've previously downloaded a backup JSON file, select it here. We'll inspect it before asking whether to import it.</p>
+   <input type="file" id="backup-file" accept=".json,application/json" aria-label="Choose a learning progress backup JSON file">
+   <button type="button" id="import" disabled>Import selected backup</button>
+   <p class="tiny">Import preserves a local copy of your current records before it makes changes. It does not erase unrelated browser information.</p>
+ </section>
+ <section class="card">
+  <h2>If no records appear</h2>
+  <p>Browser storage is tied to a specific website origin and browser profile. For example, Chrome, Safari, Edge, private windows, different laptops, and <kbd>yshah333.github.io</kbd> versus <kbd>yasir88y.github.io</kbd> do not automatically share saved learning data.</p>
+  <ol class="steps">
+    <li>Open the trainer and this recovery page in the exact browser profile where you previously studied.</li>
+    <li>If you used another laptop or phone, check that device before clearing anything.</li>
+    <li>If the data is found there, download a backup on that device, then import it on the device you want to use.</li>
+  </ol>
+ </section>
+</main>
+<script>
+"use strict";
+const KEYS=["artikel-studio-v2","artikel-studio-v1","artikel-studio-daily-v1","artikel-studio-round-v1","artikel-studio-recent-v1"];
+const $=id=>document.getElementById(id);
+const parse=raw=>{try{return JSON.parse(raw)}catch(_){return null}};
+const entries=obj=>obj && typeof obj==="object"&&!Array.isArray(obj)?Object.entries(obj).filter(([k,v])=>/^(?:[0-9]|[1-9][0-9])$/.test(k)&&v&&typeof v==="object"):[];
+const total=(list,k)=>list.reduce((n,[,v])=>n+(Number(v[k])||0),0);
+const validJsonProgress=val=>val && typeof val==="object" && !Array.isArray(val) && entries(val).length>0;
+function snapshot(){
+  const keys={};for(const k of KEYS){const v=localStorage.getItem(k);if(v!==null)keys[k]=v;}
+  return {format:"artikel-studio-backup-1",exportedAt:new Date().toISOString(),origin:location.origin,keys};
+}
+function saveCurrentBeforeWrite(){
+  const data=snapshot();
+  const name="artikel-studio-pre-restore-"+Date.now();
+  localStorage.setItem(name,JSON.stringify(data));
+  return name;
+}
+function downloadBackup(){
+  const data=JSON.stringify(snapshot(),null,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;link.download="artikel-studio-backup-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("scan-status").textContent="Backup download requested. Store the JSON file somewhere safe.";
+}
+function scan(){
+ const v2=parse(localStorage.getItem(KEYS[0])),v1=parse(localStorage.getItem(KEYS[1]));
+ const current=entries(v2),older=entries(v1);
+ const today=parse(localStorage.getItem(KEYS[2]));
+ const round=parse(localStorage.getItem(KEYS[3]));
+ const recent=parse(localStorage.getItem(KEYS[4]));
+ $("v2").textContent=current.length+" of 100 nouns";
+ $("v1").textContent=older.length+" of 100 nouns";
+ $("answered").textContent=String(total(current,"seen"));
+ $("accuracy").textContent=total(current,"correct")+" correct / "+total(current,"wrong")+" incorrect";
+ $("timer").textContent=today&&typeof today.ms==="number"?(Math.floor(today.ms/60000)+" minutes"):"Not found";
+ $("round").textContent=round&&Number.isFinite(Number(round.completedCount))?round.completedCount+" / 30":"Not found";
+ $("recent").textContent=Array.isArray(recent)?recent.length+" recent nouns":"Not found";
+ $("restore-legacy").hidden=older.length===0;
+ if(current.length){
+  $("diagnostic").textContent="Learning history exists in this browser. If the trainer shows zero, avoid resetting it. Export a backup, then return to the trainer and reload.";
+ }else if(older.length){
+  $("diagnostic").textContent="An older history record exists here. You can download a backup, then restore the older vocabulary statistics without throwing away any current v2 mastery entries.";
+ }else{
+  $("diagnostic").textContent="This browser has no readable v1/v2 vocabulary records. The earlier history may be in a different browser, device, or website origin, or it may have been cleared. GitHub cannot retrieve browser-only storage.";
+ }
+ return {v2,v1,current,older};
+}
+function restoreLegacy(){
+ const state=scan();
+ if(!state.older.length)return;
+ if(!confirm("Merge earlier v1 noun statistics into v2? Existing v2 successes and higher counts will be preserved. A local pre-restore copy will be kept."))return;
+ try{
+  const backupKey=saveCurrentBeforeWrite();
+  const merged={...(state.v2&&typeof state.v2==="object"&&!Array.isArray(state.v2)?state.v2:{})};
+  for(const [id,old] of state.older){
+    const prev=merged[id]&&typeof merged[id]==="object"?merged[id]:{};
+    merged[id]={
+      ...prev,
+      seen:Math.max(Number(old.seen)||0,Number(prev.seen)||0),
+      correct:Math.max(Number(old.correct)||0,Number(prev.correct)||0),
+      wrong:Math.max(Number(old.wrong)||0,Number(prev.wrong)||0),
+      lastWrongAt:Number(prev.lastWrongAt)||Number(old.last)||0,
+      successes:Array.isArray(prev.successes)?prev.successes:[]
+    };
+  }
+  localStorage.setItem("artikel-studio-v2",JSON.stringify(merged));
+  scan();$("scan-status").textContent="Earlier records merged. Local safety copy: "+backupKey+". Reload the trainer to view progress.";
+ }catch(e){$("scan-status").textContent="Could not restore: "+e.message;}
+}
+let selected=null;
+$("backup-file").addEventListener("change",async e=>{
+ selected=null;$("import").disabled=true;
+ const file=e.target.files?.[0];if(!file)return;
+ if(file.size>3000000){$("scan-status").textContent="This backup exceeds the supported 3 MB limit.";return;}
+ try{
+  const payload=parse(await file.text());
+  if(!payload||payload.format!=="artikel-studio-backup-1"||!payload.keys||typeof payload.keys!=="object"){
+    $("scan-status").textContent="Not a recognized Artikel Studio backup.";return;
+  }
+  const found=KEYS.filter(k=>typeof payload.keys[k]==="string");
+  if(!found.length){$("scan-status").textContent="No valid learning data keys in the backup.";return;}
+  for(const key of found){if(!parse(payload.keys[key]))throw new Error("Malformed data for "+key);}
+  selected={payload,found};$("import").disabled=false;
+  const historical=entries(parse(payload.keys["artikel-studio-v2"])).length;
+  $("scan-status").textContent="Backup ready: "+historical+" nouns in v2, "+found.length+" app records. Click Import to restore.";
+ }catch(e){$("scan-status").textContent="Could not read file: "+e.message;}
+});
+$("import").addEventListener("click",()=>{
+ if(!selected)return;
+ if(!confirm("Import "+selected.found.length+" saved app records from this file? This replaces matching browser keys. A local safety copy will be made first."))return;
+ try{
+  const backupKey=saveCurrentBeforeWrite();
+  for(const key of selected.found)localStorage.setItem(key,selected.payload.keys[key]);
+  scan();$("scan-status").textContent="Imported successfully. Safety copy: "+backupKey+". Reload the trainer.";
+ }catch(e){$("scan-status").textContent="Import failed: "+e.message;}
+});
+$("download").addEventListener("click",()=>{try{downloadBackup()}catch(e){$("scan-status").textContent="Backup failed: "+e.message}});
+$("scan").addEventListener("click",scan);
+$("restore-legacy").addEventListener("click",restoreLegacy);
+$("origin").textContent=location.origin;
+scan();
+</script>
+</body></html>
