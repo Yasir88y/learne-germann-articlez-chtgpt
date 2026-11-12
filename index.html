@@ -86,7 +86,7 @@
       <span class="chip">A1 learning · Silent mode</span>
     </header>
     <section class="hero" aria-labelledby="hero-title">
-      <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>100 essential German nouns in one adaptive 30-question session. Mistakes return sooner; mastered words retire. No microphone needed.</p></div>
+      <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>Practise daily for up to one hour, across multiple sittings. Your answers save automatically and mistakes return sooner.</p></div>
       <div class="hero-mark" aria-hidden="true">der<br>die<br>das.</div>
     </section>
     <section class="stats" aria-label="Your progress">
@@ -110,7 +110,7 @@
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
             <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
-          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A word is mastered after <strong>3 correct choices + 2 correct typed answers</strong>. The final two attempts unlock after a 48-hour pause. Correct recalls are spaced apart; mistakes come back sooner.</div>
+          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A word is mastered after <strong>3 correct choices + 2 correct typed answers</strong>. At most 3 mastery credits per word each day, then the final two can begin the following day. All unmastered words remain available to practise.</div>
         </div>
       </section>
 
@@ -156,6 +156,8 @@
     const LEGACY_KEY = "artikel-studio-v1";
     const SESSION_LIMIT = 30;
     const FIRST_STAGE = ["choice","choice","type"];
+    const CREDIT_GAP=5*60*1000;
+    const dayKey=(stamp=Date.now())=>{const d=new Date(stamp);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
     const TARGET_COUNTS = {choice:3,type:2};
     const SHORT_GAP = 20 * 60 * 1000;      // Different review interval (20 minutes).
     const TWO_DAYS = 48 * 60 * 60 * 1000; // Pause after third correct recall.
@@ -227,21 +229,15 @@
       return a;
     }
     function dueAt(w) {
-      if (isMastered(w)) return Infinity;
-      const successes = record(w.id).successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
-      if (!successes.length) return 0;
-      const latest = Number(successes[successes.length-1].at);
-      let eligible = latest + SHORT_GAP;
-      if (successes.length === 3) eligible = Math.max(eligible, latest + TWO_DAYS);
-      if (successes.length >= 4) eligible = Math.max(eligible, latest + FINAL_GAP);
-      // No noun may earn more than three correct answers within any rolling 48h.
-      const now=Date.now();
-      const recent = successes.filter(x=>Number(x.at) > now - TWO_DAYS);
-      if (recent.length >= 3) {
-        eligible = Math.max(eligible, Number(recent[recent.length-3].at) + TWO_DAYS);
-      }
-      return eligible;
+      if(isMastered(w))return Infinity;
+      const s=record(w.id).successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
+      if(!s.length)return 0;
+      const today=dayKey(),todayCount=s.filter(x=>dayKey(Number(x.at))===today).length;
+      if(todayCount>=3)return Infinity;
+      if(s.length>=3&&dayKey(Number(s[2].at))===today)return Infinity;
+      return Number(s[s.length-1].at)+CREDIT_GAP;
     }
+    function canCredit(w){return dueAt(w)<=Date.now();}
     function chooseMode(w) {
       const p=record(w.id), c=counts(p), total=p.successes.length;
       if (total < 3) {
@@ -255,21 +251,20 @@
       return Math.random()<0.5?"type":"choice";
     }
     function chooseWord() {
-      const now=Date.now();
-      const eligible=words.filter(w=>!isMastered(w) && dueAt(w)<=now);
-      const immediate=eligible.filter(w=>retryAt.has(w.id) && retryAt.get(w.id)<=completedCount);
-      const fresh=eligible.filter(w=>!seenThisSession.has(w.id));
-      if (immediate.length && (!fresh.length || Math.random()<0.72)) {
-        return shuffle(immediate).sort((a,b)=>record(b.id).wrong-record(a.id).wrong)[0];
+      const unmastered=words.filter(w=>!isMastered(w));
+      if(!unmastered.length)return null;
+      const due=unmastered.filter(canCredit),pool=due.length?due:unmastered;
+      const eligible=pool.filter(w=>!retryAt.has(w.id)||retryAt.get(w.id)<=completedCount);
+      const options=eligible.length?eligible:pool;
+      const retries=options.filter(w=>retryAt.has(w.id)&&retryAt.get(w.id)<=completedCount);
+      const fresh=options.filter(w=>!seenThisSession.has(w.id));
+      if(retries.length&&(!fresh.length||Math.random()<0.72))return shuffle(retries)[0];
+      if(fresh.length){
+        const weak=fresh.filter(isWeak),other=fresh.filter(w=>!isWeak(w));
+        const choice=weak.length&&(!other.length||Math.random()<0.55)?weak:other.length?other:weak;
+        return shuffle(choice).sort((a,b)=>record(a.id).successes.length-record(b.id).successes.length)[0];
       }
-      if (fresh.length) {
-        // Mix previously missed words with new words; prioritize mistakes ~45%.
-        const weak=fresh.filter(isWeak);
-        const other=fresh.filter(w=>!isWeak(w));
-        const pool=weak.length && (!other.length || Math.random()<0.45) ? weak : other.length?other:weak;
-        return shuffle(pool).sort((a,b)=>record(a.id).successes.length-record(b.id).successes.length)[0];
-      }
-      return immediate.length ? shuffle(immediate)[0] : null;
+      return shuffle(options)[0];
     }
     function updateStats() {
       const entries=words.map(w=>record(w.id));
@@ -310,7 +305,7 @@
         $("empty-title").textContent=completedCount>=SESSION_LIMIT?"Session complete!":words.every(isMastered)?"All 100 words mastered!":"All caught up for now";
         $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+describeWait();
         const allMastered=words.every(isMastered);
-        const hasDue=words.some(w=>!isMastered(w)&&dueAt(w)<=Date.now());
+        const hasDue=words.some(w=>!isMastered(w));
         $("restart").textContent=allMastered?"All words mastered":hasDue?"Start another session":"Check for due words";
         $("restart").disabled=allMastered;
         updateStats();return;
@@ -321,7 +316,7 @@
       const c=counts(record(current.id));
       $("noun").textContent=current.noun;
       $("translation").textContent=current.english;
-      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct";
+      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Credit available":" · Extra practice");
       $("reveal").hidden=false;$("reveal").disabled=false;
       $("feedback").hidden=true;$("advance-note").textContent="";
       $("session-score").textContent=roundCorrect+" correct this session";
@@ -347,7 +342,7 @@
       p.seen++;
       if (correct) {
         p.correct++;
-        p.successes.push({mode:currentMode,at:Date.now()});
+        if(canCredit(w))p.successes.push({mode:currentMode,at:Date.now()});
         roundCorrect++;
         retryAt.delete(w.id);
       } else {
@@ -361,7 +356,7 @@
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
-      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" You have mastered this noun. It will no longer appear.":correct?" You will review it again after a spaced interval.":" It will return for another attempt.");
+      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" Mastered!":correct?" Correct answer saved. Extra practice stays available while spaced mastery credits are pending.":" Mistake saved; this word will return sooner.");
       $("reveal").hidden=true;
       $("session-score").textContent=roundCorrect+" correct this session";
       document.querySelectorAll(".choice").forEach(b=>{
