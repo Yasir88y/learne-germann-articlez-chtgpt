@@ -381,7 +381,7 @@
       const c=counts(record(current.id));
       $("noun").textContent=current.noun;
       $("translation").textContent=current.english;
-      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Mastery credit available":" · Review only; credit comes later");
+      $("word-progress").textContent=(record(current.id).seen===0?"NEW NOUN · ":"")+c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Mastery credit available":" · Review only; credit comes later");
       $("reveal").hidden=false;$("reveal").disabled=false;
       $("feedback").hidden=true;$("advance-note").textContent="";
       $("session-score").textContent=roundCorrect+" correct this session";
