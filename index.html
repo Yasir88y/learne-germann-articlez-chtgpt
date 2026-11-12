@@ -420,7 +420,7 @@
       progress={};daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
     });
     if (words.length!==100 || new Set(words.map(w=>w.noun)).size!==100) console.error("Expected exactly 100 unique nouns.");
-    document.addEventListener("visibilitychange",()=>{tick();markActivity();});
+    document.addEventListener("visibilitychange",()=>{lastTick=Date.now();markActivity();saveDaily();showClock();});
     document.addEventListener("pointerdown",markActivity,{passive:true});
     document.addEventListener("keydown",markActivity,{passive:true});
     window.addEventListener("pagehide",()=>{tick();saveRound();});
