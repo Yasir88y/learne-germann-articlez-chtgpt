@@ -8,6 +8,9 @@ A free, mobile-friendly, silent German noun-article trainer, hosted with GitHub 
 - **30 questions per round**, mixing multiple-choice and typed article recall. Start another round while daily minutes remain.
 - **Pause / Resume** at any point. Individual answers, the current round, errors, and accumulated minutes are saved in browser localStorage. Closing and reopening the browser on the same day resumes the round.
 - At the daily one-hour cap, the app stops until the next calendar day. Progress remains intact. A new daily budget starts at local midnight.
+- **New vocabulary first:** All 100 nouns from the original study PDF are introduced before routinely recycling correct answers. While unseen nouns remain, about four out of five prompts are new; the fifth may revisit a missed word.
+- **Balanced reviews:** After all nouns have been introduced, the trainer favours under-practised, due-for-mastery, and difficult words. It avoids repeating the same noun within a 30-question round whenever possible, and remembers the most recent ten nouns across rounds.
+- **Visible coverage counter:** The dashboard shows how many unique nouns have been introduced out of 100. New questions are marked NEW NOUN.
 - **Mistake Hunter is automatic.** Missed nouns are prioritized and may recur later in the round.
 - **Never locked out of practice due to spaced recall.** If every word is waiting for another mastery credit, unmastered words still appear for extra practice. Extra answers affect accuracy and mistake statistics but do not earn premature mastery credit.
 
