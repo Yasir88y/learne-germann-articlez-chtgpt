@@ -94,13 +94,13 @@
     <section class="stats" aria-label="Your progress">
       <div class="stat"><div class="num" id="stat-mastered">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Words mastered</div></div>
       <div class="stat"><div class="num" id="stat-accuracy">—</div><div class="lab">Overall accuracy</div></div>
-      <div class="stat"><div class="num" id="stat-review">0</div><div class="lab">Words to review</div></div>
+      <div class="stat"><div class="num" id="stat-review">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Words introduced</div></div>
     </section>
     <main class="main">
       <section class="panel" aria-label="Study session">
         <div class="session-heading"><span class="mode-tag">DAILY PRACTICE</span><span class="small-count">30 questions per round</span></div><div class="daily-bar"><div><strong id="daily-clock">00:00 / 60:00</strong><div id="daily-status">Active study time today</div></div><button class="btn alt" id="pause-button" type="button">Pause</button></div>
         <div class="panel-pad">
-          <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Smart Article Practice</h2><p class="mode-desc" id="mode-desc">Choose or type the article. Missed words return sooner.</p></div><span class="small-count" id="question-count">1 / 30</span></div>
+          <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Smart Article Practice</h2><p class="mode-desc" id="mode-desc">New nouns first, then missed and due-review words. No pointless repeats.</p></div><span class="small-count" id="question-count">1 / 30</span></div>
           <div class="progress-track" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
           <div id="exercise">
             <div class="noun-card"><div class="noun-label">Which article belongs to this noun?</div><div class="noun" id="noun">Haus</div><div class="translation" id="translation">House</div><div class="word-progress" id="word-progress"></div><button class="article-reveal" id="reveal">Reveal article (counts as a hint)</button></div>
@@ -157,6 +157,8 @@
     const STORAGE_KEY = "artikel-studio-v2";
     const LEGACY_KEY = "artikel-studio-v1";
     const SESSION_LIMIT = 30;
+    const RECENT_KEY = "artikel-studio-recent-v1";
+    const RECENT_WINDOW = 10;
     const FIRST_STAGE = ["choice","choice","type"];
     const CREDIT_GAP=5*60*1000;
     const dayKey=(stamp=Date.now())=>{const d=new Date(stamp);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
@@ -230,7 +232,10 @@
     let currentMode = "choice";
     let seenThisSession = new Set();
     let retryAt = new Map();
+    // Persist the most recently answered nouns across rounds and page reloads.
+    let recentWords = (()=>{const a=stored(RECENT_KEY);return Array.isArray(a)?a.filter(x=>Number.isInteger(x)&&x>=0&&x<100).slice(-RECENT_WINDOW):[];})();
     let advanceTimer = null;
+    function saveRecent(){try{localStorage.setItem(RECENT_KEY,JSON.stringify(recentWords));}catch(_){}}
 
     function cancelAdvance() {
       if (advanceTimer !== null) {
@@ -288,21 +293,50 @@
       if (c.type>=2) return "choice";
       return Math.random()<0.5?"type":"choice";
     }
+    function pickBalanced(items) {
+      if(!items.length)return null;
+      // Avoid recent cards even across rounds, except when all available cards are recent.
+      let pool=items.filter(w=>!recentWords.includes(w.id));
+      if(!pool.length)pool=items;
+      // Pick the least-practised nouns rather than recycling well-known ones.
+      const fewest=Math.min(...pool.map(w=>record(w.id).seen));
+      pool=pool.filter(w=>record(w.id).seen<=fewest+1);
+      // Random order only among similarly practised words.
+      return shuffle(pool)[0];
+    }
     function chooseWord() {
       const unmastered=words.filter(w=>!isMastered(w));
       if(!unmastered.length)return null;
-      const due=unmastered.filter(canCredit),pool=due.length?due:unmastered;
-      const eligible=pool.filter(w=>!retryAt.has(w.id)||retryAt.get(w.id)<=completedCount);
-      const options=eligible.length?eligible:pool;
-      const retries=options.filter(w=>retryAt.has(w.id)&&retryAt.get(w.id)<=completedCount);
-      const fresh=options.filter(w=>!seenThisSession.has(w.id));
-      if(retries.length&&(!fresh.length||Math.random()<0.72))return shuffle(retries)[0];
-      if(fresh.length){
-        const weak=fresh.filter(isWeak),other=fresh.filter(w=>!isWeak(w));
-        const choice=weak.length&&(!other.length||Math.random()<0.55)?weak:other.length?other:weak;
-        return shuffle(choice).sort((a,b)=>record(a.id).successes.length-record(b.id).successes.length)[0];
+      const neverSeen=unmastered.filter(w=>record(w.id).seen===0);
+      const readyRetry=unmastered.filter(w=>retryAt.has(w.id)&&retryAt.get(w.id)<=completedCount);
+      // At least four out of five questions introduce unseen words when available.
+      // The fifth slot can revisit a recent error, but never endlessly repeats old correct answers.
+      if(neverSeen.length) {
+        if(readyRetry.length && completedCount>0 && completedCount%5===0)
+          return pickBalanced(readyRetry);
+        return pickBalanced(neverSeen);
       }
-      return shuffle(options)[0];
+      // The first pass through all 100 words is complete; use spaced and mistake-driven review.
+      // Prefer nouns not yet encountered in the current round.
+      const notInRound=unmastered.filter(w=>!seenThisSession.has(w.id));
+      let pool=notInRound.length?notInRound:unmastered;
+      // A repeat error gets an occasional extra slot without dominating the exercise.
+      const dueRetry=pool.filter(w=>retryAt.has(w.id)&&retryAt.get(w.id)<=completedCount);
+      if(dueRetry.length && completedCount%4===0)return pickBalanced(dueRetry);
+      const dueCredit=pool.filter(canCredit);
+      if(dueCredit.length) {
+        // Prioritize lower mastery progress and earlier exposure; mistakes break ties.
+        const ranked=dueCredit.map(w=>{
+          const p=record(w.id),credits=p.successes.length;
+          return {w,rank:credits*25+p.seen*2-Math.min(p.wrong,3)*2};
+        });
+        const min=Math.min(...ranked.map(x=>x.rank));
+        return pickBalanced(ranked.filter(x=>x.rank<=min+10).map(x=>x.w));
+      }
+      // Even when no mastery credit is due, continue practising, but rotate broadly.
+      const weak=pool.filter(w=>isWeak(w) && record(w.id).correct<=record(w.id).wrong+2);
+      if(weak.length && completedCount%4===0)return pickBalanced(weak);
+      return pickBalanced(pool);
     }
     function updateStats() {
       const entries=words.map(w=>record(w.id));
@@ -310,7 +344,7 @@
       const right=entries.reduce((t,p)=>t+p.correct,0);
       $("stat-mastered").innerHTML=words.filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
       $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
-      $("stat-review").textContent=words.filter(isWeak).length;
+      $("stat-review").innerHTML=words.filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
     }
     function startSession() {
       tick();
@@ -347,7 +381,7 @@
       const c=counts(record(current.id));
       $("noun").textContent=current.noun;
       $("translation").textContent=current.english;
-      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Credit available":" · Extra practice");
+      $("word-progress").textContent=c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Mastery credit available":" · Review only; credit comes later");
       $("reveal").hidden=false;$("reveal").disabled=false;
       $("feedback").hidden=true;$("advance-note").textContent="";
       $("session-score").textContent=roundCorrect+" correct this session";
@@ -385,7 +419,10 @@
         retryAt.set(w.id,completedCount+4);
       }
       progress[w.id]=p;saved();
-      completedCount++;current=null;saveRound();current=null;saveRound();
+      recentWords.push(w.id);
+      recentWords=recentWords.slice(-RECENT_WINDOW);
+      saveRecent();
+      completedCount++;current=null;saveRound();
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
@@ -417,7 +454,7 @@
     $("pause-button").addEventListener("click",()=>{tick();markActivity();if(daily.ms>=DAILY_MAX)return;daily.paused=!daily.paused;cancelAdvance();saveDaily();render();});
     $("reset").addEventListener("click",()=>{
       if (!confirm("Reset your saved accuracy, mistakes and mastery on this browser?")) return;
-      progress={};daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
+      progress={};recentWords=[];saveRecent();daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
     });
     if (words.length!==100 || new Set(words.map(w=>w.noun)).size!==100) console.error("Expected exactly 100 unique nouns.");
     document.addEventListener("visibilitychange",()=>{lastTick=Date.now();markActivity();saveDaily();showClock();});
