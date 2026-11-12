@@ -221,7 +221,7 @@
       lastTick=now;saveDaily();showClock();
       if(daily.ms>=DAILY_MAX&&current&&!answered)render();
     }
-    function markActivity(){lastActivity=Date.now();}
+    function markActivity(){const now=Date.now();if(now-lastActivity>IDLE_MS)lastTick=now;lastActivity=now;}
 
     let completedCount = 0;
     let roundCorrect = 0;
