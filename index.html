@@ -129,7 +129,7 @@
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
             <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
-          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A word is mastered after <strong>3 correct choices + 2 correct typed answers</strong>. At most 3 mastery credits per word each day, then the final two can begin the following day. All unmastered words remain available to practise.</div>
+          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A noun normally needs <strong>3 MCQs + 2 written answers</strong>. Any incorrect answer (or article reveal) resets that noun’s mastery steps. Recovery then requires <strong>1 correct MCQ, followed at least 24 hours later by 1 correct MCQ + 2 correct written answers</strong>. The rest of your learning history stays saved.</div>
         </div>
       </section>
 
@@ -291,6 +291,10 @@
     const CREDIT_GAP=5*60*1000;
     const dayKey=(stamp=Date.now())=>{const d=new Date(stamp);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
     const TARGET_COUNTS = {choice:3,type:2};
+    const RECOVERY_COUNTS = {choice:2,type:2};
+    const RECOVERY_WAIT = 24*60*60*1000;
+    function target(p){return p.recovery?RECOVERY_COUNTS:TARGET_COUNTS;}
+    function recoveryFirstAt(p){return p.recovery&&Number.isFinite(Number(p.recovery.firstMcqAt))?Number(p.recovery.firstMcqAt):0;}
     const $ = id => document.getElementById(id);
 
     let progress = {};
@@ -373,21 +377,28 @@
     }
     function record(id) {
       const p = progress[id];
-      if (!p || typeof p !== "object") return {seen:0,correct:0,wrong:0,successes:[],lastWrongAt:0};
+      if (!p || typeof p !== "object") return {seen:0,correct:0,wrong:0,successes:[],lastWrongAt:0,recovery:null};
       return {
         seen: Number(p.seen) || 0,
         correct: Number(p.correct) || 0,
         wrong: Number(p.wrong) || 0,
         successes: Array.isArray(p.successes) ? p.successes.filter(x=>x && (x.mode==="choice" || x.mode==="type") && Number.isFinite(Number(x.at))) : [],
-        lastWrongAt: Number(p.lastWrongAt) || 0
+        lastWrongAt: Number(p.lastWrongAt) || 0,
+        recovery: p.recovery&&typeof p.recovery==="object" ? {
+          resetAt:Number(p.recovery.resetAt)||0,
+          firstMcqAt:Number(p.recovery.firstMcqAt)||0
+        } : null
       };
     }
     function counts(p) {
       return {choice:p.successes.filter(x=>x.mode==="choice").length,type:p.successes.filter(x=>x.mode==="type").length};
     }
     function isMastered(w) {
-      const c = counts(record(w.id));
-      return c.choice >= TARGET_COUNTS.choice && c.type >= TARGET_COUNTS.type;
+      const p=record(w.id),c=counts(p),t=target(p);
+      return c.choice>=t.choice&&c.type>=t.type&&
+        (!p.recovery || (recoveryFirstAt(p)>0&&
+         p.successes.filter(x=>Number(x.at)>recoveryFirstAt(p)).length>=3 &&
+         p.successes.slice(1).every(x=>Number(x.at)>=recoveryFirstAt(p)+RECOVERY_WAIT)));
     }
     function isWeak(w) { return record(w.id).wrong > 0 && !isMastered(w); }
     const SAFETY_KEY = "artikel-studio-safety-copy-v1";
@@ -418,24 +429,38 @@
     }
     function dueAt(w) {
       if(isMastered(w))return Infinity;
-      const s=record(w.id).successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
+      const p=record(w.id),s=p.successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
       if(!s.length)return 0;
       const today=dayKey(),todayCount=s.filter(x=>dayKey(Number(x.at))===today).length;
       if(todayCount>=3)return Infinity;
+      if(p.recovery){
+        const first=recoveryFirstAt(p);
+        if(!first)return 0;
+        if(s.length===1)return first+RECOVERY_WAIT;
+        return Math.max(first+RECOVERY_WAIT,Number(s[s.length-1].at)+CREDIT_GAP);
+      }
       if(s.length>=3&&dayKey(Number(s[2].at))===today)return Infinity;
       return Number(s[s.length-1].at)+CREDIT_GAP;
     }
     function canCredit(w){return dueAt(w)<=Date.now();}
     function chooseMode(w) {
-      const p=record(w.id), c=counts(p), total=p.successes.length;
-      if (total < 3) {
-        // Early stage contains exactly 2 multiple choice successes and 1 typed.
-        if (c.choice>=2) return "type";
-        if (c.type>=1) return "choice";
+      const p=record(w.id),c=counts(p),t=target(p);
+      if(p.recovery){
+        // Recovery: first correct MCQ as soon as possible. Only after 24 hours
+        // can the final MCQ and two written responses count.
+        if(!recoveryFirstAt(p))return "choice";
+        if(c.choice>=t.choice)return "type";
+        if(c.type>=t.type)return "choice";
+        return Math.random()<0.7?"type":"choice";
+      }
+      const total=p.successes.length;
+      if(total<3){
+        if(c.choice>=2)return "type";
+        if(c.type>=1)return "choice";
         return Math.random()<0.36?"type":"choice";
       }
-      if (c.choice>=3) return "type";
-      if (c.type>=2) return "choice";
+      if(c.choice>=3)return "type";
+      if(c.type>=2)return "choice";
       return Math.random()<0.5?"type":"choice";
     }
     function pickBalanced(items) {
@@ -487,13 +512,14 @@
       const entries=deckWords().map(w=>record(w.id));
       const tried=entries.reduce((t,p)=>t+p.seen,0);
       const right=entries.reduce((t,p)=>t+p.correct,0);
-      const milestones=entries.reduce((n,p)=>n+Math.min(3,p.successes.filter(x=>x.mode==="choice").length)+Math.min(2,p.successes.filter(x=>x.mode==="type").length),0);
+      const milestones=entries.reduce((n,p)=>n+Math.min(target(p).choice,counts(p).choice)+Math.min(target(p).type,counts(p).type),0);
+      const required=entries.reduce((n,p)=>n+target(p).choice+target(p).type,0);
       const wrong=entries.reduce((n,p)=>n+p.wrong,0);
       $("stat-mastered").innerHTML=deckWords().filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
-      $("stat-steps").innerHTML=milestones+'<span style="color:#93a1af;font-size:15px">/500</span>';
+      $("stat-steps").innerHTML=milestones+'<span style="color:#93a1af;font-size:15px">/'+required+'</span>';
       $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
       $("stat-review").innerHTML=deckWords().filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
-      $("progress-explainer").textContent=tried?right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). Mastery steps count only qualifying spaced recalls; full mastery takes 3 MCQs + 2 typed answers per noun.":"Your answers and spaced mastery steps are saved automatically in this browser.";
+      $("progress-explainer").textContent=tried?right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). One wrong answer resets that noun’s mastery steps and starts a 24-hour recovery challenge.":"Your answers and spaced mastery steps are saved automatically in this browser.";
     }
     function startSession() {
       tick();
@@ -538,10 +564,17 @@
       answered=false;
       currentMode=chooseMode(current);
       seenThisSession.add(current.id);
-      const c=counts(record(current.id));
+      const p=record(current.id),c=counts(p),t=target(p);
       $("noun").textContent=current.noun;
       $("translation").textContent=current.english;
-      $("word-progress").textContent=(record(current.id).seen===0?"NEW NOUN · ":"")+c.choice+"/3 choices · "+c.type+"/2 written correct"+(canCredit(current)?" · Mastery credit available":" · Review only; credit comes later");
+      const recoveryNote=p.recovery?(recoveryFirstAt(p)?
+        (Date.now()<recoveryFirstAt(p)+RECOVERY_WAIT?
+          " · Recovery: final steps unlock 24h after first MCQ":
+          " · Recovery: second MCQ + 2 written"):
+        " · Recovery: first correct MCQ required"):"";
+      $("word-progress").textContent=(p.seen===0?"NEW NOUN · ":"")+
+        c.choice+"/"+t.choice+" choices · "+c.type+"/"+t.type+" written correct"+
+        recoveryNote+(canCredit(current)?" · Credit available":" · Extra practice");
       $("reveal").hidden=false;$("reveal").disabled=false;
       $("feedback").hidden=true;$("advance-note").textContent="";
       $("session-score").textContent=roundCorrect+" correct this session";
@@ -567,15 +600,22 @@
       answered=true;
       const p=record(w.id);
       p.seen++;
-      if (correct) {
+      if(correct){
         p.correct++;
-        if(canCredit(w))p.successes.push({mode:currentMode,at:Date.now()});
+        // Recovery requires its first MCQ before any other successes can count.
+        if(canCredit(w)){
+          p.successes.push({mode:currentMode,at:Date.now()});
+          if(p.recovery&&!recoveryFirstAt(p)&&currentMode==="choice")p.recovery.firstMcqAt=Date.now();
+        }
         roundCorrect++;
         retryAt.delete(w.id);
-      } else {
-        p.wrong++;
-        p.lastWrongAt=Date.now();
-        // Repeat missed words after at least three intervening questions.
+      }else{
+        p.wrong++;p.lastWrongAt=Date.now();
+        // An incorrect response or revealed hint resets ALL prior mastery credits,
+        // not the historical attempt statistics (which remain for review).
+        p.successes=[];
+        p.recovery={resetAt:Date.now(),firstMcqAt:0};
+        // Bring this difficult word back after a few intervening questions.
         retryAt.set(w.id,completedCount+4);
       }
       progress[w.id]=p;saved();
@@ -586,7 +626,7 @@
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
-      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" Mastered!":correct?" Correct answer saved. Extra practice stays available while spaced mastery credits are pending.":" Mistake saved; this word will return sooner.");
+      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" Mastered!":correct?" Answer saved. Mastery credit only counts at the required interval.":" Mastery steps reset for this noun. Recovery: 1 correct MCQ, then after 24 hours 1 correct MCQ + 2 written answers.");
       $("reveal").hidden=true;
       $("session-score").textContent=roundCorrect+" correct this session";
       document.querySelectorAll(".choice").forEach(b=>{
