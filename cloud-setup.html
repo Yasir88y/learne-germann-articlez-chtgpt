@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Artikel Studio — Cloud Sync Setup</title>
+<style>
+*{box-sizing:border-box}body{font:15px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;color:#1b2c40;background:#f5f7f8;margin:0}main{max-width:790px;margin:auto;padding:26px 16px 56px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px}.top a,a{color:#176457}h1{font-size:30px;letter-spacing:-1px;line-height:1.2;margin:15px 0}h2{font-size:18px;margin-top:0}.lead{color:#617083}.card{background:#fff;border:1px solid #e2e8ee;border-radius:18px;padding:22px;margin:16px 0}.hint{border-radius:12px;background:#edf7f2;padding:15px;margin:18px 0;color:#24584f}.warning{background:#fff6e9;color:#86552f}.step{border-bottom:1px solid #e8edef;padding:14px 0}.step:last-child{border:0}code{background:#f0f3f5;padding:2px 5px;border-radius:5px;overflow-wrap:anywhere}pre{white-space:pre-wrap;background:#16263c;color:#fff;padding:16px;border-radius:12px;overflow:auto}.small{font-size:12px;color:#607187}@media(max-width:480px){h1{font-size:26px}.card{padding:18px}}
+</style>
+</head>
+<body><main>
+<div class="top"><strong>A. Artikel Studio</strong><a href="./">Return to trainer</a></div>
+<h1>Sync progress between your devices</h1>
+<p class="lead">Your German noun learning history can be stored privately in a Supabase database and loaded on your phone, laptop, or other browser when you sign in with the same email address.</p>
+<div class="hint warning"><strong>Why not store it in the GitHub directory?</strong> GitHub Pages serves static files; it cannot safely write each learner's records back into a public repository. This cloud database keeps private learning data separate from the public website source code.</div>
+<section class="card"><h2>One-time setup</h2>
+<div class="step"><strong>1. Create a Supabase project</strong><p>Visit <a href="https://supabase.com/dashboard/projects" target="_blank" rel="noopener noreferrer">Supabase Dashboard</a>. Create a project on the free plan. You can also connect the Supabase plugin in ChatGPT so the project and database setup can be handled together.</p></div>
+<div class="step"><strong>2. Create the secure progress table</strong><p>In the project's SQL Editor, run the contents of <a href="https://github.com/Yasir88y/learne-germann-articlez-chtgpt/blob/main/supabase-setup.sql" target="_blank" rel="noopener noreferrer">supabase-setup.sql</a>. It enables row-level security so each signed-in user can only read and update their own records.</p></div>
+<div class="step"><strong>3. Configure email sign-in</strong><p>In Supabase Authentication, enable Email sign-in and set the Site URL and Redirect URL to:</p><pre>https://yasir88y.github.io/learne-germann-articlez-chtgpt/</pre><p>The app sends a private sign-in link to your email. You won't need to remember another password.</p></div>
+<div class="step"><strong>4. Add your public configuration</strong><p>Open <a href="https://github.com/Yasir88y/learne-germann-articlez-chtgpt/blob/main/cloud-config.js" target="_blank" rel="noopener noreferrer">cloud-config.js</a> in GitHub. Replace the empty strings with your Supabase <strong>Project URL</strong> and <strong>publishable key</strong> (or older public anon key):</p><pre>window.ARTIKEL_CLOUD_CONFIG = {
+  url: "https://YOUR-PROJECT.supabase.co",
+  publishableKey: "sb_publishable_..."
+};</pre><p class="small">The publishable key is intended for browser apps. NEVER put a secret/service_role key, database password, or personal login token in GitHub files.</p></div>
+<div class="step"><strong>5. Sign in from your devices</strong><p>Return to Artikel Studio, enter your email, and open the link in your inbox. Your existing local history is merged into the private cloud copy. On another device, sign in with that same email to load your saved words, correct and wrong answers, and spaced mastery progress.</p></div>
+</section>
+<section class="card"><h2>Keep your backup</h2><p>Before connecting a new device, use <a href="./recovery.html">Backup / recover progress</a> to download a JSON copy. Your local records continue to work if you are offline or cloud sync fails. Avoid practising simultaneously on two devices until they have both completed their first sync.</p></section>
+<p class="small">Cloud sync is optional. Until you configure it and sign in, your app remains a free local-only German article trainer and no browser data is transmitted to Supabase.</p>
+</main></body></html>
