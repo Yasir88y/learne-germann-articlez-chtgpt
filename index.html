@@ -38,6 +38,13 @@
     .session-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;background:#fbfcfd;border-bottom:1px solid var(--line)}
     .mode-tag{color:#175a51;background:#e8f4ef;font-size:10px;font-weight:850;letter-spacing:1.2px;border-radius:8px;padding:7px 10px;white-space:nowrap}
     .word-progress{font-size:12px;color:#7a888d;margin-top:8px}
+    .deckbar{padding:16px 24px;background:#fff;border-bottom:1px solid var(--line)}
+    .deck-heading{display:block;font-size:12px;font-weight:750;color:#607589;margin-bottom:9px}
+    .deck-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .deck-choice{min-width:0;border:1px solid #dfe7e8;background:#f5f7f8;color:#314b56;border-radius:12px;padding:11px 15px;text-align:left;font-size:15px;font-weight:800}
+    .deck-choice small{display:block;font-size:11px;font-weight:600;color:#71858a}
+    .deck-choice.active{border:2px solid #267b69;background:#e8f4ef;color:#175e50;padding:10px 14px}
+
     .daily-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;gap:10px;border-bottom:1px solid var(--line)}
     .daily-bar strong{font-size:19px;font-variant-numeric:tabular-nums}.daily-bar #daily-status{font-size:11px;color:var(--sub)}.daily-bar button{padding:9px 17px}
     .rules-note{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:#74808a}
@@ -76,9 +83,9 @@
     .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:28px;color:#758496;font-size:12px}
     .link-button{background:none;border:0;text-decoration:underline;color:#647585;padding:4px}
     [hidden]{display:none!important}
-    @media(max-width:780px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
+    @media(max-width:780px){.deckbar{padding:14px 18px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
     @media(max-width:440px){.chip{display:none}.session-heading{padding:13px 18px;gap:8px}.session-heading .small-count{font-size:11px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
-    @media(max-width:360px){.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
+    @media(max-width:360px){.deckbar{padding:12px 14px}.deck-choice{font-size:13px;padding:9px 11px}.deck-choice.active{padding:8px 10px}.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
   </style>
 </head>
@@ -101,6 +108,13 @@
     <p class="progress-explainer" id="progress-explainer" aria-live="polite">Your earlier answers and credited learning steps are counted separately.</p>
     <main class="main">
       <section class="panel" aria-label="Study session">
+        <div class="deckbar">
+          <span class="deck-heading">Vocabulary set</span>
+          <div class="deck-actions" role="group" aria-label="Choose vocabulary set">
+            <button type="button" class="deck-choice" id="deck-new" aria-pressed="true">101–200 <small>New words</small></button>
+            <button type="button" class="deck-choice" id="deck-old" aria-pressed="false">1–100 <small>Original words</small></button>
+          </div>
+        </div>
         <div class="session-heading"><span class="mode-tag">DAILY PRACTICE</span><span class="small-count">30 questions per round</span></div><div class="daily-bar"><div><strong id="daily-clock">00:00 / 60:00</strong><div id="daily-status">Active study time today</div></div><button class="btn alt" id="pause-button" type="button">Pause</button></div>
         <div class="panel-pad">
           <div class="quiz-top"><div><h2 class="mode-title" id="mode-title">Smart Article Practice</h2><p class="mode-desc" id="mode-desc">New nouns first, then missed and due-review words. No pointless repeats.</p></div><span class="small-count" id="question-count">1 / 30</span></div>
@@ -257,6 +271,14 @@
     ];
     const words = raw.concat(extraRaw).map((r,i)=>({id:i,article:r[0],noun:r[1],english:r[2]}));
 
+    // New vocabulary is the default; original records remain on their original IDs 0-99.
+    const DECK_KEY="artikel-studio-active-deck-v1";
+    let deck=localStorage.getItem(DECK_KEY)==="old"?"old":"new";
+    const deckWords=()=>deck==="new"?words.slice(100,200):words.slice(0,100);
+    const inDeck=w=>deck==="new"?w.id>=100&&w.id<200:w.id<100;
+    const roundKey=()=>deck==="new"?"artikel-studio-round-series02-v1":"artikel-studio-round-v1";
+    const recentKey=()=>deck==="new"?"artikel-studio-recent-series02-v1":"artikel-studio-recent-v1";
+
     // The v2 mastery model counts only correct answers with a known question format.
     // Legacy attempts/mistakes are retained, but legacy correct answers cannot count
     // toward the new 3-MCQ + 2-typing mastery rule.
@@ -302,8 +324,8 @@
     let lastTick=Date.now(),lastActivity=Date.now();
     function saveDaily(){try{localStorage.setItem(DAILY_KEY,JSON.stringify(daily));}catch(_){}}
     function saveRound(){
-      try{localStorage.setItem(ROUND_KEY,JSON.stringify({
-        day:dayKey(),completedCount,roundCorrect,seenIds:[...seenThisSession],
+      try{localStorage.setItem(roundKey(),JSON.stringify({
+        day:dayKey(),deck,completedCount,roundCorrect,seenIds:[...seenThisSession],
         retries:[...retryAt],currentId:current?current.id:null,currentMode
       }));}catch(_){}
     }
@@ -339,9 +361,9 @@
     let seenThisSession = new Set();
     let retryAt = new Map();
     // Persist the most recently answered nouns across rounds and page reloads.
-    let recentWords = (()=>{const a=stored(RECENT_KEY);return Array.isArray(a)?a.filter(x=>Number.isInteger(x)&&x>=0&&x<100).slice(-RECENT_WINDOW):[];})();
+    let recentWords = (()=>{const a=stored(recentKey());return Array.isArray(a)?a.filter(x=>Number.isInteger(x)&&!!words[x]&&inDeck(words[x])).slice(-RECENT_WINDOW):[];})();
     let advanceTimer = null;
-    function saveRecent(){try{localStorage.setItem(RECENT_KEY,JSON.stringify(recentWords));}catch(_){}}
+    function saveRecent(){try{localStorage.setItem(recentKey(),JSON.stringify(recentWords));}catch(_){}}
 
     function cancelAdvance() {
       if (advanceTimer !== null) {
@@ -428,7 +450,7 @@
       return shuffle(pool)[0];
     }
     function chooseWord() {
-      const unmastered=words.filter(w=>!isMastered(w));
+      const unmastered=deckWords().filter(w=>!isMastered(w));
       if(!unmastered.length)return null;
       const neverSeen=unmastered.filter(w=>record(w.id).seen===0);
       const readyRetry=unmastered.filter(w=>retryAt.has(w.id)&&retryAt.get(w.id)<=completedCount);
@@ -462,15 +484,15 @@
       return pickBalanced(pool);
     }
     function updateStats() {
-      const entries=words.map(w=>record(w.id));
+      const entries=deckWords().map(w=>record(w.id));
       const tried=entries.reduce((t,p)=>t+p.seen,0);
       const right=entries.reduce((t,p)=>t+p.correct,0);
       const milestones=entries.reduce((n,p)=>n+Math.min(3,p.successes.filter(x=>x.mode==="choice").length)+Math.min(2,p.successes.filter(x=>x.mode==="type").length),0);
       const wrong=entries.reduce((n,p)=>n+p.wrong,0);
-      $("stat-mastered").innerHTML=words.filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("stat-mastered").innerHTML=deckWords().filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
       $("stat-steps").innerHTML=milestones+'<span style="color:#93a1af;font-size:15px">/500</span>';
       $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
-      $("stat-review").innerHTML=words.filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
+      $("stat-review").innerHTML=deckWords().filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
       $("progress-explainer").textContent=tried?right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). Mastery steps count only qualifying spaced recalls; full mastery takes 3 MCQs + 2 typed answers per noun.":"Your answers and spaced mastery steps are saved automatically in this browser.";
     }
     function startSession() {
@@ -482,8 +504,19 @@
       saveRound();render();
     }
     function describeWait(){return "All answers are saved. Keep practising within your remaining daily time.";}
+    function updateDeckUI(){
+      for(const key of ["new","old"]){
+        const btn=$("deck-"+key);
+        btn.classList.toggle("active",deck===key);
+        btn.setAttribute("aria-pressed",String(deck===key));
+      }
+      $("mode-desc").textContent=deck==="new"?
+        "Words 101–200 from your new PDF. New nouns first, then mistake reviews.":
+        "Your original 1–100 nouns. Earlier mastery and answers are preserved.";
+    }
     function render() {
       cancelAdvance();
+      updateDeckUI();
       if (completedCount >= SESSION_LIMIT) current=null;
       if(!current&&completedCount<SESSION_LIMIT&&!daily.paused&&daily.ms<DAILY_MAX)current=chooseWord();
       const finished=completedCount>=SESSION_LIMIT||daily.paused||daily.ms>=DAILY_MAX||!current;
@@ -496,8 +529,8 @@
       if (finished) {
         $("empty-title").textContent=daily.ms>=DAILY_MAX?"Your daily hour is complete!":daily.paused?"Practice paused":completedCount>=SESSION_LIMIT?"Round complete!":"All 100 words mastered!";
         $("empty-message").textContent=completedCount+" questions completed · "+roundCorrect+" correct. "+(daily.ms>=DAILY_MAX?"All progress is saved; return tomorrow.":daily.paused?"Your remaining study time and progress are saved.":describeWait());
-        const allMastered=words.every(isMastered);
-        const hasDue=words.some(w=>!isMastered(w));
+        const allMastered=deckWords().every(isMastered);
+        const hasDue=deckWords().some(w=>!isMastered(w));
         $("restart").textContent=allMastered?"All mastered":daily.ms>=DAILY_MAX?"Come back tomorrow":daily.paused?"Resume practice":"Start another round";
         $("restart").disabled=allMastered||daily.ms>=DAILY_MAX;
         saveRound();showClock();updateStats();return;
