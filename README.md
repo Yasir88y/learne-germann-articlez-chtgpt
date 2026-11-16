@@ -2,6 +2,15 @@
 
 A free, mobile-friendly, silent German noun-article trainer, hosted with GitHub Pages. It includes the original 100 nouns from the learner's vocabulary PDF.
 
+## Vocabulary sets
+
+- **Words 101–200 (New words):** Default study set, taken **exactly** from the PDF `German_100_Common_Words_101-200_Articles_English.pdf` supplied by the learner. This set has 100 German nouns, their articles, and English meanings.
+- **Words 1–100 (Original words):** Switch back at any time. Original nouns keep their existing IDs (0–99), stored answers, mistakes and mastery steps.
+- The new nouns use IDs 100–199 within the existing `artikel-studio-v2` learning-history key. **No migration or reset** of previous learning data is necessary.
+- Each set has its own 30-question round and recent-word history, so switching does not overwrite the other set's unfinished session. The daily 60-minute study timer remains shared.
+- The progress dashboard displays counts out of 100 nouns and 500 mastery steps **for whichever set is selected**, not all 200 combined.
+- The recovery page reports original and new noun coverage separately and exports both sets together.
+
 ## Daily study
 
 - **Study for up to 60 minutes per calendar day.** The on-screen timer tracks active time while the quiz is visible; it pauses when the page is hidden, when you press Pause, after two minutes of inactivity, or between rounds. Unused minutes remain available later that day.
