@@ -45,7 +45,7 @@ kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
  <section class="card">
   <h2>Records found</h2>
   <div class="rows">
-    <div class="r"><span>Current learning history (v2)</span><strong id="v2">Checking…</strong></div>
+    <div class="r"><span>Current learning history (v2)</span><strong id="v2">Checking…</strong></div><div class="r"><span>Original words (1–100)</span><strong id="original">Checking…</strong></div><div class="r"><span>New words (101–200)</span><strong id="new-words">Checking…</strong></div>
     <div class="r"><span>Earlier learning history (v1)</span><strong id="v1">Checking…</strong></div><div class="r"><span>Automatic safety copy</span><strong id="safety">Checking…</strong></div>
     <div class="r"><span>Total answers in current history</span><strong id="answered">—</strong></div>
     <div class="r"><span>Correct / incorrect in current history</span><strong id="accuracy">—</strong></div>
@@ -78,7 +78,7 @@ kbd{font-family:inherit;background:#edf2f4;border-radius:5px;padding:2px 5px}
 const KEYS=["artikel-studio-v2","artikel-studio-v1","artikel-studio-daily-v1","artikel-studio-round-v1","artikel-studio-recent-v1","artikel-studio-safety-copy-v1"];
 const $=id=>document.getElementById(id);
 const parse=raw=>{try{return JSON.parse(raw)}catch(_){return null}};
-const entries=obj=>obj && typeof obj==="object"&&!Array.isArray(obj)?Object.entries(obj).filter(([k,v])=>/^(?:[0-9]|[1-9][0-9])$/.test(k)&&v&&typeof v==="object"):[];
+const entries=obj=>obj && typeof obj==="object"&&!Array.isArray(obj)?Object.entries(obj).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<200&&v&&typeof v==="object"):[];
 const total=(list,k)=>list.reduce((n,[,v])=>n+(Number(v[k])||0),0);
 const validJsonProgress=val=>val && typeof val==="object" && !Array.isArray(val) && entries(val).length>0;
 function snapshot(){
@@ -108,9 +108,11 @@ function scan(){
  const today=parse(localStorage.getItem(KEYS[2]));
  const round=parse(localStorage.getItem(KEYS[3]));
  const recent=parse(localStorage.getItem(KEYS[4]));
- $("v2").textContent=current.length+" of 100 nouns";
+ $("v2").textContent=current.length+" of 200 nouns";
+ $("original").textContent=current.filter(([k])=>Number(k)<100).length+" of 100 nouns";
+ $("new-words").textContent=current.filter(([k])=>Number(k)>=100).length+" of 100 nouns";
  $("v1").textContent=older.length+" of 100 nouns";
- $("safety").textContent=safetyRows.length+" of 100 nouns";
+ $("safety").textContent=safetyRows.length+" of 200 nouns";
  $("answered").textContent=String(total(current,"seen"));
  $("accuracy").textContent=total(current,"correct")+" correct / "+total(current,"wrong")+" incorrect";
  $("timer").textContent=today&&typeof today.ms==="number"?(Math.floor(today.ms/60000)+" minutes"):"Not found";
