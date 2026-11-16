@@ -403,6 +403,7 @@
         wrong: Number(p.wrong) || 0,
         successes: Array.isArray(p.successes) ? p.successes.filter(x=>x && (x.mode==="choice" || x.mode==="type") && Number.isFinite(Number(x.at))) : [],
         lastWrongAt: Number(p.lastWrongAt) || 0,
+        updatedAt: Number(p.updatedAt)||0,
         recovery: p.recovery&&typeof p.recovery==="object" ? {
           resetAt:Number(p.recovery.resetAt)||0,
           firstMcqAt:Number(p.recovery.firstMcqAt)||0
@@ -638,6 +639,7 @@
         // Bring this difficult word back after a few intervening questions.
         retryAt.set(w.id,completedCount+4);
       }
+      p.updatedAt=Date.now();
       progress[w.id]=p;saved();
       recentWords.push(w.id);
       recentWords=recentWords.slice(-RECENT_WINDOW);
