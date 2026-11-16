@@ -167,7 +167,7 @@
       await new Promise((resolve,reject)=>{
         if(window.supabase?.createClient)return resolve();
         const tag=document.createElement("script");
-        tag.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+        tag.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
         tag.onload=resolve;tag.onerror=()=>reject(Error("Supabase client could not load"));
         document.head.appendChild(tag);
       });
