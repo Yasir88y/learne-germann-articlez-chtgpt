@@ -623,15 +623,33 @@
     document.addEventListener("keydown",markActivity,{passive:true});
     window.addEventListener("pagehide",()=>{tick();saveRound();});
     setInterval(tick,1000);
-    const last=stored(ROUND_KEY);
-    if(last&&last.day===dayKey()){
-      completedCount=Math.max(0,Math.min(SESSION_LIMIT,Number(last.completedCount)||0));
-      roundCorrect=Math.max(0,Number(last.roundCorrect)||0);
-      seenThisSession=new Set(Array.isArray(last.seenIds)?last.seenIds:[]);
-      retryAt=new Map(Array.isArray(last.retries)?last.retries:[]);
-      const id=Number(last.currentId);
-      if(last.currentId!==null&&Number.isInteger(id)&&words[id]&&!isMastered(words[id]))current=words[id];
+    function restoreSelectedRound(){
+      completedCount=0;roundCorrect=0;answered=false;current=null;
+      seenThisSession=new Set();retryAt=new Map();
+      const last=stored(roundKey());
+      if(last&&last.day===dayKey()){
+        completedCount=Math.max(0,Math.min(SESSION_LIMIT,Number(last.completedCount)||0));
+        roundCorrect=Math.max(0,Number(last.roundCorrect)||0);
+        seenThisSession=new Set(Array.isArray(last.seenIds)?last.seenIds.filter(id=>words[id]&&inDeck(words[id])):[]);
+        retryAt=new Map(Array.isArray(last.retries)?last.retries.filter(x=>Array.isArray(x)&&words[x[0]]&&inDeck(words[x[0]])):[]);
+        const id=Number(last.currentId);
+        if(last.currentId!==null&&Number.isInteger(id)&&words[id]&&inDeck(words[id])&&!isMastered(words[id])){
+          current=words[id];currentMode=last.currentMode==="type"?"type":"choice";
+        }
+      }
     }
+    function switchDeck(next){
+      if(next===deck||(next!=="new"&&next!=="old"))return;
+      tick();cancelAdvance();saveRound();saveRecent();
+      deck=next;
+      try{localStorage.setItem(DECK_KEY,deck);}catch(_){}
+      const prevRecent=stored(recentKey());
+      recentWords=Array.isArray(prevRecent)?prevRecent.filter(id=>words[id]&&inDeck(words[id])).slice(-RECENT_WINDOW):[];
+      restoreSelectedRound();updateStats();render();
+    }
+    $("deck-new").addEventListener("click",()=>switchDeck("new"));
+    $("deck-old").addEventListener("click",()=>switchDeck("old"));
+    restoreSelectedRound();
     updateStats();render();
   </script>
 </body>
