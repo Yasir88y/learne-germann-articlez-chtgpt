@@ -38,6 +38,13 @@
     .session-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;background:#fbfcfd;border-bottom:1px solid var(--line)}
     .mode-tag{color:#175a51;background:#e8f4ef;font-size:10px;font-weight:850;letter-spacing:1.2px;border-radius:8px;padding:7px 10px;white-space:nowrap}
     .word-progress{font-size:12px;color:#7a888d;margin-top:8px}
+    .cloudbar{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .cloudtitle{font-size:13px;font-weight:800}
+    .cloudstatus{font-size:12px;color:var(--sub);margin-top:3px}
+    .cloudform{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .cloudform input{min-width:200px;border:1px solid #dbe3e7;border-radius:10px;padding:10px 12px;font-size:14px}
+    .cloudform button{padding:10px 13px;font-size:12px}
+    .cloudbar a{font-size:12px;color:#28665c}
     .deckbar{padding:16px 24px;background:#fff;border-bottom:1px solid var(--line)}
     .deck-heading{display:block;font-size:12px;font-weight:750;color:#607589;margin-bottom:9px}
     .deck-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -98,6 +105,18 @@
     <section class="hero" aria-labelledby="hero-title">
       <div><div class="eyebrow">YOUR DAILY GERMAN PRACTICE</div><h1 id="hero-title">Know the noun.<br>Remember the article.</h1><p>Practise daily for up to one hour, across multiple sittings. Your answers save automatically and mistakes return sooner.</p></div>
       <div class="hero-mark" aria-hidden="true">der<br>die<br>das.</div>
+    </section>
+    <section class="cloudbar" aria-label="Learning progress cloud synchronization">
+      <div><div class="cloudtitle">Learning history · Cross-device sync</div><div class="cloudstatus" id="cloud-status" role="status" aria-live="polite">Checking cloud connection…</div></div>
+      <form class="cloudform" id="cloud-form" hidden>
+        <input id="cloud-email" type="email" autocomplete="email" placeholder="Your email address" aria-label="Email for cloud sign-in" required>
+        <button class="btn" type="submit">Email sign-in link</button>
+      </form>
+      <div id="cloud-actions" class="cloudform" hidden>
+        <button class="btn alt" type="button" id="cloud-sync-now">Sync now</button>
+        <button class="btn alt" type="button" id="cloud-signout">Sign out</button>
+      </div>
+      <a href="./cloud-setup.html" id="cloud-setup-link" hidden>Cloud setup instructions</a>
     </section>
     <section class="stats" aria-label="Your progress">
       <div class="stat"><div class="num" id="stat-review">0<span style="color:#93a1af;font-size:15px">/100</span></div><div class="lab">Nouns practised</div></div>
@@ -417,6 +436,7 @@
           localStorage.setItem(SAFETY_KEY,JSON.stringify(previous));
         }
         localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));
+        if(window.ArtikelCloud&&window.ArtikelCloud.onLocalChange)window.ArtikelCloud.onLocalChange();
       }catch(_){}
     }
     function shuffle(array) {
@@ -653,6 +673,7 @@
     $("restart").addEventListener("click",()=>{markActivity();if(daily.paused){daily.paused=false;saveDaily();render();}else startSession();});
     $("pause-button").addEventListener("click",()=>{tick();markActivity();if(daily.ms>=DAILY_MAX)return;daily.paused=!daily.paused;cancelAdvance();saveDaily();render();});
     $("reset").addEventListener("click",()=>{
+      if(window.ArtikelCloud&&window.ArtikelCloud.signedIn){alert("To protect your cloud history, sign out before resetting local progress. Export a backup first.");return;}
       if (!confirm("This will erase learning progress from this browser. A safety copy will be kept. Do you want to continue?")) return;
       if (prompt("Type DELETE to confirm the reset.")!=="DELETE") return;
       progress={};recentWords=[];saveRecent();daily={day:dayKey(),ms:0,paused:false};saved();saveDaily();updateStats();startSession();
@@ -692,5 +713,7 @@
     restoreSelectedRound();
     updateStats();render();
   </script>
+  <script src="./cloud-config.js"></script>
+  <script src="./cloud-sync.js"></script>
 </body>
 </html>
