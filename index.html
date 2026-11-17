@@ -485,11 +485,10 @@
         return Math.random()<0.7?"type":"choice";
       }
       const total=c.choice+c.type;
-      if(total<3){
-        if(c.choice>=2)return "type";
-        if(c.type>=1)return "choice";
-        return Math.random()<0.36?"type":"choice";
-      }
+      // First teach each noun in MCQ, then test spelling from English.
+      // Don't ask for an entirely unseen noun from memory.
+      if(total<2)return "choice";
+      if(total===2)return "type";
       if(c.choice>=3)return "type";
       if(c.type>=2)return "choice";
       return Math.random()<0.5?"type":"choice";
@@ -664,7 +663,9 @@
         p.wrong++;p.lastWrongAt=Date.now();
         // An incorrect response or revealed hint resets ALL prior mastery credits,
         // not the historical attempt statistics (which remain for review).
-        p.successes=[];
+        // Retain old article-only typing credits as historical records; reset
+        // only the credits used for current MCQ and full-word mastery.
+        p.successes=p.successes.filter(x=>x.mode==="type");
         p.recovery={resetAt:Date.now(),firstMcqAt:0};
         // Bring this difficult word back after a few intervening questions.
         retryAt.set(w.id,completedCount+4);
