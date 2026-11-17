@@ -73,6 +73,11 @@
     .choice.right{border-color:#238578;background:#ebf8f2;color:#126547;opacity:1}
     .choice.wrong{border-color:#df7777;background:#fff0ef;color:#9d3434;opacity:1}
     .type-row{display:flex;gap:10px;align-items:stretch}
+    .german-keys{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:10px}
+    .german-keys-label{font-size:11px;font-weight:700;color:var(--sub);margin-right:5px}
+    .german-keys button{border:1px solid #dfe5e8;background:#f5f7f8;color:#294a54;border-radius:8px;min-width:34px;min-height:34px;font-size:17px;font-weight:700;padding:3px 7px}
+    .german-keys button:hover:not(:disabled){background:#eaf2ef}
+    .german-keys button:disabled{opacity:.5}
     .type-input{width:100%;border-radius:13px;border:2px solid #dfe6e9;padding:14px 16px;min-width:0;background:#fff;font-size:18px}
     .btn{border:0;border-radius:12px;padding:13px 20px;background:#1b6f62;color:#fff;font-weight:750;white-space:nowrap}
     .btn:hover:not(:disabled){background:#155648}
@@ -144,7 +149,19 @@
             <div class="choices" id="choices">
               <button class="choice" data-article="der">der</button><button class="choice" data-article="die">die</button><button class="choice" data-article="das">das</button>
             </div>
-            <form class="type-row" id="type-form" hidden><input class="type-input" id="type-input" type="text" aria-label="Type article and complete German noun" placeholder="Article + German word" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="85" enterkeyhint="done" required><button class="btn" type="submit">Check</button></form>
+            <div id="writing-area" hidden>
+              <form class="type-row" id="type-form"><input class="type-input" id="type-input" type="text" aria-label="Type article and complete German noun" placeholder="Article + German word" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="85" enterkeyhint="done" required><button class="btn" type="submit">Check</button></form>
+              <div class="german-keys" role="group" aria-label="Insert special German letters">
+                <span class="german-keys-label">German letters</span>
+                <button type="button" data-insert="ä">ä</button>
+                <button type="button" data-insert="ö">ö</button>
+                <button type="button" data-insert="ü">ü</button>
+                <button type="button" data-insert="ß">ß</button>
+                <button type="button" data-insert="Ä">Ä</button>
+                <button type="button" data-insert="Ö">Ö</button>
+                <button type="button" data-insert="Ü">Ü</button>
+              </div>
+            </div>
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
             <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
@@ -619,12 +636,13 @@
       $("feedback").hidden=true;$("advance-note").textContent="";
       $("session-score").textContent=roundCorrect+" correct this session";
       $("choices").hidden=currentMode!=="choice";
-      $("type-form").hidden=currentMode!=="type";
+      $("writing-area").hidden=currentMode!=="type";
       $("answer-label").textContent=currentMode==="type"?"WRITE FROM MEMORY · Article + complete German noun":"MULTIPLE CHOICE · Choose the correct article";
       document.querySelectorAll(".choice").forEach(b=>{
         b.disabled=false;b.classList.remove("right","wrong");
       });
       $("type-input").disabled=false;$("type-input").value="";
+      document.querySelectorAll(".german-keys button").forEach(b=>{b.disabled=false;});
       // Avoid popping up the phone keyboard before the user taps the input.
       saveRound();showClock();
     }
@@ -700,6 +718,7 @@
         b.classList.toggle("wrong",!correct&&b.dataset.article===guess&&guess!==w.article);
       });
       $("type-input").disabled=true;
+      document.querySelectorAll(".german-keys button").forEach(b=>{b.disabled=true;});
       $("advance-note").textContent=correct?"Next word in 0.6s…":"Review for 3 seconds…";
       updateStats();showClock();
       advanceTimer=setTimeout(()=>{
@@ -715,6 +734,18 @@
       if (value) submit(value);
     });
     $("reveal").addEventListener("click",()=>submit("",true));
+    document.querySelectorAll(".german-keys button").forEach(button=>{
+      button.addEventListener("click",()=>{
+        if(answered||currentMode!=="type")return;
+        const input=$("type-input"),ch=button.dataset.insert;
+        const start=input.selectionStart??input.value.length;
+        const end=input.selectionEnd??start;
+        input.value=input.value.slice(0,start)+ch+input.value.slice(end);
+        input.focus();
+        input.setSelectionRange(start+ch.length,start+ch.length);
+        markActivity();
+      });
+    });
     $("restart").addEventListener("click",()=>{markActivity();if(daily.paused){daily.paused=false;saveDaily();render();}else startSession();});
     $("pause-button").addEventListener("click",()=>{tick();markActivity();if(daily.ms>=DAILY_MAX)return;daily.paused=!daily.paused;cancelAdvance();saveDaily();render();});
     $("reset").addEventListener("click",()=>{
