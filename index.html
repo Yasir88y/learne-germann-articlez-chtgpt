@@ -72,9 +72,9 @@
     .choice:hover:not(:disabled){background:#f0f5f3;border-color:#a8c3bd}
     .choice.right{border-color:#238578;background:#ebf8f2;color:#126547;opacity:1}
     .choice.wrong{border-color:#df7777;background:#fff0ef;color:#9d3434;opacity:1}
-    .type-row{display:flex;gap:10px}
-    .type-input{width:100%;border-radius:13px;border:2px solid #dfe6e9;padding:14px 16px;text-transform:lowercase;min-width:0;background:#fff;font-size:18px}
-    .btn{border:0;border-radius:12px;padding:13px 20px;background:#1b6f62;color:#fff;font-weight:750}
+    .type-row{display:flex;gap:10px;align-items:stretch}
+    .type-input{width:100%;border-radius:13px;border:2px solid #dfe6e9;padding:14px 16px;min-width:0;background:#fff;font-size:18px}
+    .btn{border:0;border-radius:12px;padding:13px 20px;background:#1b6f62;color:#fff;font-weight:750;white-space:nowrap}
     .btn:hover:not(:disabled){background:#155648}
     .btn.alt{background:#edf2f4;color:#2d4855}
     .btn.alt:hover:not(:disabled){background:#e2ebe9}
@@ -92,7 +92,7 @@
     [hidden]{display:none!important}
     @media(max-width:780px){.deckbar{padding:14px 18px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:16px 14px 40px}.hero{padding:24px}.hero-mark{display:none}.panel-pad{padding:20px}.stats{gap:9px}.stat{padding:12px}.stat .num{font-size:23px}.hero h1{font-size:29px}}
     @media(max-width:440px){.chip{display:none}.session-heading{padding:13px 18px;gap:8px}.session-heading .small-count{font-size:11px}.noun-card{min-height:205px}.actions .btn{padding:12px 15px}.stats{gap:8px}.stat{padding:11px 10px}.stat .lab{font-size:11px}}
-    @media(max-width:360px){.deckbar{padding:12px 14px}.deck-choice{font-size:13px;padding:9px 11px}.deck-choice.active{padding:8px 10px}.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
+    @media(max-width:360px){.type-row{flex-direction:column}.type-row .btn{width:100%}.deckbar{padding:12px 14px}.deck-choice{font-size:13px;padding:9px 11px}.deck-choice.active{padding:8px 10px}.shell{padding:12px 10px 32px}.hero{padding:21px}.panel-pad{padding:16px}.session-heading{padding:12px 14px}.mode-tag{font-size:9px;padding:6px 7px}.noun-card{min-height:190px;padding:16px}.stat{padding:10px 7px}.stat .num{font-size:21px}.choices{gap:7px}.choice{padding:15px 3px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
   </style>
 </head>
@@ -144,11 +144,11 @@
             <div class="choices" id="choices">
               <button class="choice" data-article="der">der</button><button class="choice" data-article="die">die</button><button class="choice" data-article="das">das</button>
             </div>
-            <form class="type-row" id="type-form" hidden><input class="type-input" id="type-input" aria-label="Type the article" placeholder="Type der, die or das" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="10" required><button class="btn" type="submit">Check</button></form>
+            <form class="type-row" id="type-form" hidden><input class="type-input" id="type-input" type="text" aria-label="Type article and complete German noun" placeholder="Article + German word" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="85" enterkeyhint="done" required><button class="btn" type="submit">Check</button></form>
             <div class="feedback" id="feedback" aria-live="polite" hidden><strong id="feedback-title"></strong><p id="feedback-desc"></p></div>
             <div class="actions"><span class="subtle" id="session-score">0 correct without hints</span><span class="subtle" id="advance-note" aria-live="polite"></span></div>
           </div>
-          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A noun normally needs <strong>3 MCQs + 2 written answers</strong>. Any incorrect answer (or article reveal) resets that noun’s mastery steps. Recovery then requires <strong>1 correct MCQ, followed at least 24 hours later by 1 correct MCQ + 2 correct written answers</strong>. The rest of your learning history stays saved.</div>
+          <div class="empty" id="empty" hidden><h3 id="empty-title">All done</h3><p id="empty-message"></p><button class="btn" id="restart">Start another session</button></div><div class="rules-note">A noun normally needs <strong>3 correct article choices + 2 correctly written complete phrases (article + noun)</strong>. Any incorrect answer (including misspelling) or revealed answer resets that noun’s mastery steps. Recovery then requires <strong>1 correct MCQ, followed at least 24 hours later by 1 correct MCQ + 2 correct written answers</strong>. The rest of your learning history stays saved.</div>
         </div>
       </section>
 
@@ -401,7 +401,7 @@
         seen: Number(p.seen) || 0,
         correct: Number(p.correct) || 0,
         wrong: Number(p.wrong) || 0,
-        successes: Array.isArray(p.successes) ? p.successes.filter(x=>x && (x.mode==="choice" || x.mode==="type") && Number.isFinite(Number(x.at))) : [],
+        successes: Array.isArray(p.successes) ? p.successes.filter(x=>x && ["choice","type","write"].includes(x.mode) && Number.isFinite(Number(x.at))) : [],
         lastWrongAt: Number(p.lastWrongAt) || 0,
         updatedAt: Number(p.updatedAt)||0,
         recovery: p.recovery&&typeof p.recovery==="object" ? {
@@ -410,15 +410,25 @@
         } : null
       };
     }
+    // Previous 'type' successes were article-only, not full-word writing.
+    // Retain them as history but require new 'write' credits for written mastery.
+    function qualifyingSuccesses(p) {
+      return p.successes.filter(x=>x.mode==="choice"||x.mode==="write");
+    }
     function counts(p) {
-      return {choice:p.successes.filter(x=>x.mode==="choice").length,type:p.successes.filter(x=>x.mode==="type").length};
+      const q=qualifyingSuccesses(p);
+      return {
+        choice:q.filter(x=>x.mode==="choice").length,
+        type:q.filter(x=>x.mode==="write").length,
+        legacyType:p.successes.filter(x=>x.mode==="type").length
+      };
     }
     function isMastered(w) {
       const p=record(w.id),c=counts(p),t=target(p);
       return c.choice>=t.choice&&c.type>=t.type&&
         (!p.recovery || (recoveryFirstAt(p)>0&&
-         p.successes.filter(x=>Number(x.at)>recoveryFirstAt(p)).length>=3 &&
-         p.successes.slice(1).every(x=>Number(x.at)>=recoveryFirstAt(p)+RECOVERY_WAIT)));
+         qualifyingSuccesses(p).filter(x=>Number(x.at)>recoveryFirstAt(p)).length>=3 &&
+         qualifyingSuccesses(p).slice(1).every(x=>Number(x.at)>=recoveryFirstAt(p)+RECOVERY_WAIT)));
     }
     function isWeak(w) { return record(w.id).wrong > 0 && !isMastered(w); }
     const SAFETY_KEY = "artikel-studio-safety-copy-v1";
@@ -450,7 +460,7 @@
     }
     function dueAt(w) {
       if(isMastered(w))return Infinity;
-      const p=record(w.id),s=p.successes.slice().sort((a,b)=>Number(a.at)-Number(b.at));
+      const p=record(w.id),s=qualifyingSuccesses(p).slice().sort((a,b)=>Number(a.at)-Number(b.at));
       if(!s.length)return 0;
       const today=dayKey(),todayCount=s.filter(x=>dayKey(Number(x.at))===today).length;
       if(todayCount>=3)return Infinity;
@@ -474,7 +484,7 @@
         if(c.type>=t.type)return "choice";
         return Math.random()<0.7?"type":"choice";
       }
-      const total=p.successes.length;
+      const total=c.choice+c.type;
       if(total<3){
         if(c.choice>=2)return "type";
         if(c.type>=1)return "choice";
@@ -518,7 +528,7 @@
       if(dueCredit.length) {
         // Prioritize lower mastery progress and earlier exposure; mistakes break ties.
         const ranked=dueCredit.map(w=>{
-          const p=record(w.id),credits=p.successes.length;
+          const p=record(w.id),credits=qualifyingSuccesses(p).length;
           return {w,rank:credits*25+p.seen*2-Math.min(p.wrong,3)*2};
         });
         const min=Math.min(...ranked.map(x=>x.rank));
@@ -534,13 +544,18 @@
       const tried=entries.reduce((t,p)=>t+p.seen,0);
       const right=entries.reduce((t,p)=>t+p.correct,0);
       const milestones=entries.reduce((n,p)=>n+Math.min(target(p).choice,counts(p).choice)+Math.min(target(p).type,counts(p).type),0);
+      const previousArticleOnly=entries.reduce((n,p)=>n+counts(p).legacyType,0);
       const required=entries.reduce((n,p)=>n+target(p).choice+target(p).type,0);
       const wrong=entries.reduce((n,p)=>n+p.wrong,0);
       $("stat-mastered").innerHTML=deckWords().filter(isMastered).length + '<span style="color:#93a1af;font-size:15px">/100</span>';
       $("stat-steps").innerHTML=milestones+'<span style="color:#93a1af;font-size:15px">/'+required+'</span>';
       $("stat-accuracy").textContent=tried?Math.round((right/tried)*100)+"%":"—";
       $("stat-review").innerHTML=deckWords().filter(w=>record(w.id).seen>0).length+'<span style="color:#93a1af;font-size:15px">/100</span>';
-      $("progress-explainer").textContent=tried?right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). One wrong answer resets that noun’s mastery steps and starts a 24-hour recovery challenge.":"Your answers and spaced mastery steps are saved automatically in this browser.";
+      $("progress-explainer").textContent=tried?
+        right+" correct and "+wrong+" incorrect answers recorded ("+tried+" total). "+
+        (previousArticleOnly?previousArticleOnly+" earlier article-only typing credits are preserved in history; the new writing requirement needs the complete German phrase. ":"")+
+        "An incorrect answer resets that noun’s mastery steps and starts a 24-hour recovery challenge.":
+        "Your answers and spaced mastery steps are saved automatically in this browser.";
     }
     function startSession() {
       tick();
@@ -586,8 +601,13 @@
       currentMode=chooseMode(current);
       seenThisSession.add(current.id);
       const p=record(current.id),c=counts(p),t=target(p);
-      $("noun").textContent=current.noun;
-      $("translation").textContent=current.english;
+      // A writing challenge must not expose the word the learner is meant to spell.
+      $("noun").textContent=currentMode==="type"?current.english:current.noun;
+      $("translation").textContent=currentMode==="type"?
+        "German word starts with "+current.noun[0]+" · "+Array.from(current.noun).length+" letters":
+        current.english;
+      document.querySelector(".noun-label").textContent=currentMode==="type"?
+        "WRITE THE COMPLETE GERMAN PHRASE":"WHICH ARTICLE BELONGS TO THIS NOUN?";
       const recoveryNote=p.recovery?(recoveryFirstAt(p)?
         (Date.now()<recoveryFirstAt(p)+RECOVERY_WAIT?
           " · Recovery: final steps unlock 24h after first MCQ":
@@ -601,7 +621,7 @@
       $("session-score").textContent=roundCorrect+" correct this session";
       $("choices").hidden=currentMode!=="choice";
       $("type-form").hidden=currentMode!=="type";
-      $("answer-label").textContent=currentMode==="type"?"WRITE THE ARTICLE · Type der, die or das":"MULTIPLE CHOICE · Choose the correct article";
+      $("answer-label").textContent=currentMode==="type"?"WRITE FROM MEMORY · Article + complete German noun":"MULTIPLE CHOICE · Choose the correct article";
       document.querySelectorAll(".choice").forEach(b=>{
         b.disabled=false;b.classList.remove("right","wrong");
       });
@@ -610,14 +630,24 @@
       saveRound();showClock();
     }
     function explain(w) {
-      return w.noun==="Eltern"?"“die Eltern” is plural, so its article is always die.":"Remember the whole phrase: "+w.article+" "+w.noun+".";
+      return w.noun==="Eltern"?"“die Eltern” is plural and uses die.":"Remember the whole phrase: "+w.article+" "+w.noun+".";
+    }
+    function evaluateWritten(input,w) {
+      const cleaned=input.normalize("NFC").trim().replace(/\s+/g," ");
+      const separator=cleaned.indexOf(" ");
+      const writtenArticle=(separator===-1?cleaned:cleaned.slice(0,separator)).toLowerCase();
+      const writtenNoun=separator===-1?"":cleaned.slice(separator+1);
+      const articleCorrect=writtenArticle===w.article;
+      const nounCorrect=writtenNoun===w.noun;
+      return {correct:articleCorrect&&nounCorrect,articleCorrect,nounCorrect,entered:cleaned};
     }
     function submit(value,showOnly=false) {
       tick();
       if(answered||!current||daily.paused||daily.ms>=DAILY_MAX)return;
       const w=current;
+      const written=currentMode==="type"?evaluateWritten(value,w):null;
       const guess=value.trim().toLowerCase();
-      const correct=!showOnly&&guess===w.article;
+      const correct=!showOnly&&(written?written.correct:guess===w.article);
       answered=true;
       const p=record(w.id);
       p.seen++;
@@ -625,7 +655,7 @@
         p.correct++;
         // Recovery requires its first MCQ before any other successes can count.
         if(canCredit(w)){
-          p.successes.push({mode:currentMode,at:Date.now()});
+          p.successes.push({mode:currentMode==="type"?"write":"choice",at:Date.now()});
           if(p.recovery&&!recoveryFirstAt(p)&&currentMode==="choice")p.recovery.firstMcqAt=Date.now();
         }
         roundCorrect++;
@@ -648,7 +678,19 @@
       $("feedback").hidden=false;
       $("feedback").classList.toggle("bad",!correct);
       $("feedback-title").textContent=correct?"Correct! "+w.article+" "+w.noun:showOnly?"Revealed: "+w.article+" "+w.noun:"Not quite — "+w.article+" "+w.noun;
-      $("feedback-desc").textContent=explain(w)+(isMastered(w)?" Mastered!":correct?" Answer saved. Mastery credit only counts at the required interval.":" Mastery steps reset for this noun. Recovery: 1 correct MCQ, then after 24 hours 1 correct MCQ + 2 written answers.");
+      let writingFeedback="";
+      if(written&&!correct&&!showOnly){
+        writingFeedback=written.articleCorrect&&(!written.nounCorrect)?
+          "Your article was correct, but check the German spelling and noun capitalization. ":
+          written.nounCorrect&&(!written.articleCorrect)?
+          "The noun was correct, but the article was incorrect. ":
+          "Check both the article and the German noun. ";
+        writingFeedback+='You entered: "'+written.entered+'". ';
+      }
+      $("feedback-desc").textContent=writingFeedback+explain(w)+(isMastered(w)?
+        " Mastered!":correct?
+        " Answer saved. Mastery credit only counts at the required interval.":
+        " Mastery steps reset for this noun. Recovery: 1 correct MCQ, then after 24 hours 1 correct MCQ + 2 written answers.");
       $("reveal").hidden=true;
       $("session-score").textContent=roundCorrect+" correct this session";
       document.querySelectorAll(".choice").forEach(b=>{
@@ -668,7 +710,7 @@
     document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>submit(b.dataset.article)));
     $("type-form").addEventListener("submit",e=>{
       e.preventDefault();
-      const value=$("type-input").value.trim().toLowerCase();
+      const value=$("type-input").value.trim();
       if (value) submit(value);
     });
     $("reveal").addEventListener("click",()=>submit("",true));
