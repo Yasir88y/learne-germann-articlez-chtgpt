@@ -23,16 +23,21 @@ A free, mobile-friendly, silent German noun-article trainer, hosted with GitHub 
 - **Mistake Hunter is automatic.** Missed nouns are prioritized and may recur later in the round.
 - **Never locked out of practice due to spaced recall.** If every word is waiting for another mastery credit, unmastered words still appear for extra practice. Extra answers affect accuracy and mistake statistics but do not earn premature mastery credit.
 
-## Mastery and mistake recovery
+## Full-word writing practice and mastery
 
-- **Normal mastery:** a noun needs 3 credited correct MCQs and 2 credited correct typed answers.
-- **Any incorrect response or revealed answer resets that noun’s current mastery credits to zero.** Historical correct/wrong statistics are preserved.
-- **Recovery step 1:** get 1 correct multiple-choice answer as soon as possible (preferably on the day of the mistake).
-- **Recovery steps 2–4:** only **at least 24 hours after that first credited MCQ**, earn 1 additional correct MCQ and 2 correct typed answers. That completes recovery mastery (2 MCQs + 2 typed after the error).
-- Recovery answers are spaced by at least 5 minutes, with a maximum of 3 mastery credits per noun per day; extra practice answers can still be completed and are recorded without premature credit.
-- **Any further error resets recovery to the beginning again**, with a new 24-hour wait after the next first MCQ.
-- After mastery, the noun is removed from the selected deck. All other learning history remains saved. Multiple-choice and typed questions are mixed adaptively.
-- Correct answers advance after **0.6 seconds**; incorrect/revealed answers show feedback for **3 seconds**.
+- **Article choice:** See the German noun and tap its correct article (`der`, `die`, or `das`).
+- **Full-word writing:** See **only the English meaning** and a small starting-letter/word-length cue. Type the **entire German phrase**, e.g. `die Kartoffel`, not just `die`.
+- The writing checker validates the **article, exact German noun spelling, and capitalization** (German nouns begin with capitals). Accented characters such as `ä`, `ö`, `ü`, and `ß` matter. Extra spaces and capitalization of the article itself are tolerated.
+- Touch-friendly buttons for `ä ö ü ß Ä Ö Ü` help learners type using phone keyboards without a German layout.
+- The first practice prompts for a new noun are multiple-choice so it is introduced before a full-word writing question.
+- **Normal mastery:** 3 correct article-choice answers and **2 new correct complete-phrase written answers**.
+- **Older article-only typing credits:** kept as historical records (mode `type`) but do not count toward **full-word** writing mastery. The new written credits use mode `write`; the learner's correct/wrong attempt totals remain intact.
+- **Any incorrect response** (including a misspelling, wrong article, or revealed answer) resets only that noun's qualifying mastery credits. Historical attempts and older article-only typing records remain available.
+- **Recovery step 1:** 1 correct MCQ as soon as possible, ideally on the day of the mistake.
+- **Recovery steps 2–4:** only after **at least 24 hours** from the first recovery MCQ, earn 1 additional MCQ and 2 correctly written complete phrases.
+- Recovery mastery answers are spaced by at least 5 minutes, with up to three qualifying credits per noun per day. Additional practice answers are still saved, even when not yet eligible for mastery.
+- Another mistake starts recovery over. Fully mastered nouns leave their selected learning deck.
+- Correct answers auto-advance after **0.6 seconds**. Incorrect and revealed answers show the correct full phrase for **3 seconds**.
 
 ## Publishing
 
